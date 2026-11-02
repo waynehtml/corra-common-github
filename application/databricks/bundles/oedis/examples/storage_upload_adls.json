@@ -1,0 +1,22 @@
+{
+  "id": "upload",
+  "handler": "oedis.handler.storage.upload",
+  "params": {
+    "connection": {
+      "uri": "abfss://oedatastore@lakeanalyticsprd01.dfs.core.windows.net/curated"
+    },
+    "requests": [
+      {
+        "src_dir": "download",
+        "include": [
+          "*.parquet"
+        ],
+        "exclude": [
+          "*_tmp.parquet"
+        ],
+        "recursive": true,
+        "dst_dir": "partners"
+      }
+    ]
+  }
+}

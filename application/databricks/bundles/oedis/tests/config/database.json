@@ -1,0 +1,39 @@
+{
+  "pipeline": "corra",
+  "tasks": [
+    {
+      "id": "download",
+      "handler": "oedis.handler.database.download",
+      "params": {
+        "requests": [
+          {
+            "id": "dev_ext_ora_habs.gsmadmin_internal.duplicated_table",
+            "select_sql": "SELECT * FROM dev_ext_ora_habs.gsmadmin_internal.duplicated_table",
+            "format": "parquet"
+          }
+        ]
+      }
+    },
+    {
+      "id": "upload",
+      "handler": "oedis.handler.database.upload",
+      "params": {
+        "requests": [
+          {
+            "id": "dev_ext_ora_habs.gsmadmin_internal.duplicated_table",
+            "table": "dev_application_cat.oedisint_db.duplicated_table",
+            "format": "parquet",
+            "select_sql": "SELECT * FROM {source}",
+            "write": {
+              "mode": "overwrite",
+              "options": {
+                "mergeSchema": "true",
+                "overwriteSchema": "true"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

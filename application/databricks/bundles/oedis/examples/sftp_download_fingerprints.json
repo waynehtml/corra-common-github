@@ -1,0 +1,49 @@
+{
+  "id": "download",
+  "handler": "oedis.handler.sftp.download",
+  "params": {
+    "connection": {
+      "hostname": "sftp.partner.example.com",
+      "disabled_algorithms": {
+        "pubkeys": [
+          "rsa-sha2-512",
+          "rsa-sha2-256"
+        ]
+      },
+      "port": 22,
+      "keepalive_sec": 30,
+      "max_connections": 3,
+      "root_dir": "/outbound",
+      "auth": {
+        "type": "basic",
+        "username": "partner_user",
+        "password": "{{keyvault(scope=dis-secrets, key=sftp-password)}}"
+      },
+      "host_verification": {
+        "mode": "fingerprints",
+        "fingerprints": [
+          "sha256:EXAMPLEFINGERPRINTBASE64",
+          "md5:aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99"
+        ]
+      },
+      "fault_tolerant": {
+        "retries": 2,
+        "retry_interval_sec": 10
+      }
+    },
+    "requests": [
+      {
+        "src_dir": "",
+        "include": [
+          "*.csv"
+        ],
+        "exclude": [
+          "*_tmp.csv"
+        ],
+        "updated_after": "2026-04-01T00:00:00Z",
+        "updated_before": "2026-04-02T00:00:00Z",
+        "recursive": true
+      }
+    ]
+  }
+}

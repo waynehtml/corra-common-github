@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oedis/schema/oedis.handler.file.flatten.json",
+  "title": "Task params for oedis.handler.file.flatten",
+  "description": "Configuration for flattening inbox files into a single destination directory using basename-only file names.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "requests"
+  ],
+  "properties": {
+    "requests": {
+      "type": "array",
+      "description": "List of flatten instructions. Each item describes which inbox files to collect recursively and how they should be flattened into the destination directory.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "src_dir": {
+            "type": "string",
+            "description": "Inbox-relative source directory to read from. Empty or omitted means ctx.inbox. The resolved path must stay inside ctx.inbox."
+          },
+          "dst_dir": {
+            "type": "string",
+            "description": "Inbox-relative destination directory for flattened files. Empty or omitted means ctx.inbox. The resolved path must stay inside ctx.inbox and must not normalize to the same path as src_dir."
+          },
+          "include": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "description": "File match pattern or list of patterns to include. Patterns are matched against each source file path relative to src_dir.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exclude": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "description": "File match pattern or list of patterns to exclude after include matching. Patterns are matched against each source file path relative to src_dir.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "operation": {
+            "type": "string",
+            "description": "Whether matched files should be moved or copied into the flattened destination directory.",
+            "enum": [
+              "move",
+              "copy"
+            ]
+          },
+          "on_collision": {
+            "type": "string",
+            "description": "How source-name collisions are handled after flattening to basename-only paths.",
+            "enum": [
+              "error",
+              "overwrite",
+              "rename"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

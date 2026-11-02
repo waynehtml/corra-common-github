@@ -1,0 +1,365 @@
+bundle:
+  name: template
+
+workspace:
+  root_path: /Workspace/oedataservices/.bundle/${bundle.name}
+
+variables:
+  dataset:
+    default: "template"
+  debug:
+    default: true
+  timezone:
+    default: "America/Toronto"
+  human_date_format:
+    default: "YYYY-MM-DD"
+  python_date_format:
+    default: "%Y-%m-%d"
+  spark_date_format:
+    default: "yyyy-MM-dd"
+  land_root:
+    default: "/Volumes/${bundle.target}_application_cat/oedisint_db/land-oedataservices/dis/template/data/land"
+  config_root:
+    default: "/Volumes/${bundle.target}_application_cat/oedisint_db/land-oedataservices/dis/template/data/conifg"
+  raw_root:
+    default: "/Volumes/${bundle.target}_application_cat/oedisint_db/land-oedataservices/dis/template/data/raw"
+  secrete_scope:
+    default: "lake-kv-oedataservices-scope"
+  email_service_url_key:
+    default: "oeds-email-service-url"
+  azure_tenant_id_key:
+    default: ""
+  service_spn_id_key:
+    default: ""
+  service_spn_secrete_key:
+    default: ""
+  internal_databricks_workspace_url:
+    default: ""
+  internal_databricks_resource_id:
+    default: ""
+  internal_dis_job_id:
+    default: ""
+  external_databricks_workspace_url:
+    default: ""
+  external_databricks_resource_id:
+    default: ""
+  external_dis_job_id:
+    default: ""
+  datamart_endpoints:
+    default: ""
+  nexus_url:
+    default: "https://fcp4lnexuap01.bocad.bank-banque-canada.ca/nexus/repository/pypi-all/simple"
+  dbk_runtime_version:
+    default: "16.4.x-scala2.13"
+  job_runas_account:
+    default: ""
+  job_cluster_policy_id:
+    default: ""
+  job_cluster_id:
+    default: ""
+  job_alert_emails:
+    default: []
+  job_notify_emails:
+    default: ""
+  CLUSTER_INIT_PATH:
+    default: ""
+  CLUSTER_WHEELHOUSE_PATH:
+    default: ""
+
+common_base_parameters: &common_base_parameters
+  dataset: ${var.dataset}
+  env: ${bundle.target}
+  job_notify_emails: ""
+  timezone: "${var.timezone}"
+  human_date_format: "${var.human_date_format}"
+  python_date_format: "${var.python_date_format}"
+  spark_date_format: "${var.spark_date_format}"
+  land_root: "${var.land_root}"
+  config_root: "${var.config_root}"
+  raw_root: "${var.raw_root}"
+  secrete_scope: "${var.secrete_scope}"
+  email_service_url_key: "${var.email_service_url_key}"
+  azure_tenant_id_key: "${var.azure_tenant_id_key}"
+  service_spn_id_key: "${var.service_spn_id_key}"
+  service_spn_secrete_key: "${var.service_spn_secrete_key}"
+  internal_databricks_workspace_url: "${var.internal_databricks_workspace_url}"
+  internal_databricks_resource_id: "${var.internal_databricks_resource_id}"
+  internal_dis_job_id: "${var.internal_dis_job_id}"
+  external_databricks_workspace_url: "${var.external_databricks_workspace_url}"
+  external_databricks_resource_id: "${var.external_databricks_resource_id}"
+  external_dis_job_id: ""
+  datamart_endpoints: "${var.datamart_endpoints}"
+  nexus_url: "${var.nexus_url}"
+  dbk_runtime_version: "${var.dbk_runtime_version}"
+  job_name: "{{job.name}}"
+  job_id: "{{job.id}}"
+  job_run_id: "{{job.run_id}}"
+  job_trigger_type: "{{job.trigger.type}}"
+  workspace_url: "{{workspace.url}}"
+  cluster_init_path: "${var.CLUSTER_INIT_PATH}"
+  cluster_wheelhouse_path: "${var.CLUSTER_WHEELHOUSE_PATH}"
+
+resources:
+  jobs:
+    OEDS_SAMPLE_JOB:
+      name: OEDS-SAMPLE-JOB
+      description: OEDS Sample Job
+
+      run_as:
+        service_principal_name: ${var.job_runas_account}
+
+      queue:
+        enabled: true
+      max_concurrent_runs: 10
+
+      parameters:
+        - name: rundate
+          default: ""
+        - name: debug
+          default: ${var.debug}
+        - name: task
+          default: ""
+        - name: args
+          default: ""
+        - name: job_run_ingest
+          default: "1"
+        - name: job_run_land_to_raw
+          default: "1"
+        - name: job_run_raw_to_std
+          default: "1"
+        - name: job_run_std_to_curated
+          default: "1"
+
+
+      email_notifications:
+        on_failure: ${var.job_alert_emails}
+
+      tags:
+        App: OEDS
+
+      #job_clusters:
+      #  - job_cluster_key: Job_cluster
+      #    new_cluster:
+      #      policy_id: ${var.job_cluster_policy_id}
+      #      spark_version: ${var.dbk_runtime_version}
+      #      custom_tags:
+      #        Project: OEDS_DIS
+      #      init_scripts:
+      #        - workspace:
+      #            destination: ${workspace.file_path}/cluster/init_16.4.sh
+      #      autoscale:
+      #        min_workers: 1
+      #        max_workers: 2
+
+      tasks:
+        - task_key: main
+          #job_cluster_key: Job_cluster
+          existing_cluster_id: ${var.job_cluster_id}
+          notebook_task:
+            notebook_path: ./tasks/task_00_main.py
+            base_parameters:
+              <<: *common_base_parameters
+
+        - task_key: check_after_main
+          depends_on:
+            - task_key: main
+          condition_task:
+            left: "{{tasks.main.values.flow_action}}"
+            op: EQUAL_TO
+            right: "continue"
+
+        - task_key: check_run_ingest
+          depends_on:
+            - task_key: check_after_main
+              outcome: "true"
+          condition_task:
+            left: "{{job.parameters.job_run_ingest}}"
+            op: NOT_EQUAL
+            right: "0"
+
+        - task_key: ingest
+          depends_on:
+            - task_key: check_run_ingest
+              outcome: "true"
+          #job_cluster_key: Job_cluster
+          existing_cluster_id: ${var.job_cluster_id}
+          notebook_task:
+            notebook_path: ./tasks/task_10_ingest.py
+            base_parameters:
+              <<: *common_base_parameters
+
+        - task_key: check_after_ingest
+          depends_on:
+            - task_key: ingest
+          condition_task:
+            left: "{{tasks.ingest.values.flow_action}}"
+            op: EQUAL_TO
+            right: "continue"
+
+        - task_key: check_run_land_to_raw
+          depends_on:
+            - task_key: check_run_ingest
+              outcome: "false"
+            - task_key: check_after_ingest
+              outcome: "true"
+          run_if: AT_LEAST_ONE_SUCCESS
+          condition_task:
+            left: "{{job.parameters.job_run_land_to_raw}}"
+            op: NOT_EQUAL
+            right: "0"
+
+        - task_key: land_to_raw
+          depends_on:
+            - task_key: check_run_land_to_raw
+              outcome: "true"
+          #job_cluster_key: Job_cluster
+          existing_cluster_id: ${var.job_cluster_id}
+          notebook_task:
+            notebook_path: ./tasks/task_20_land_to_raw.py
+            base_parameters:
+              <<: *common_base_parameters
+
+        - task_key: check_after_land_to_raw
+          depends_on:
+            - task_key: land_to_raw
+          condition_task:
+            left: "{{tasks.land_to_raw.values.flow_action}}"
+            op: EQUAL_TO
+            right: "continue"
+
+        - task_key: check_run_raw_to_std
+          depends_on:
+            - task_key: check_run_land_to_raw
+              outcome: "false"
+            - task_key: check_after_land_to_raw
+              outcome: "true"
+          run_if: AT_LEAST_ONE_SUCCESS
+          condition_task:
+            left: "{{job.parameters.job_run_raw_to_std}}"
+            op: NOT_EQUAL
+            right: "0"
+
+        - task_key: raw_to_std
+          depends_on:
+            - task_key: check_run_raw_to_std
+              outcome: "true"
+          #job_cluster_key: Job_cluster
+          existing_cluster_id: ${var.job_cluster_id}
+          notebook_task:
+            notebook_path: ./tasks/task_30_raw_to_std.py
+            base_parameters:
+              <<: *common_base_parameters
+
+        - task_key: check_after_raw_to_std
+          depends_on:
+            - task_key: raw_to_std
+          condition_task:
+            left: "{{tasks.raw_to_std.values.flow_action}}"
+            op: EQUAL_TO
+            right: "continue"
+
+        - task_key: check_run_std_to_curated
+          depends_on:
+            - task_key: check_run_raw_to_std
+              outcome: "false"
+            - task_key: check_after_raw_to_std
+              outcome: "true"
+          run_if: AT_LEAST_ONE_SUCCESS
+          condition_task:
+            left: "{{job.parameters.job_run_std_to_curated}}"
+            op: NOT_EQUAL
+            right: "0"
+
+        - task_key: std_to_curated
+          depends_on:
+            - task_key: check_run_std_to_curated
+              outcome: "true"
+          #job_cluster_key: Job_cluster
+          existing_cluster_id: ${var.job_cluster_id}
+          notebook_task:
+            notebook_path: ./tasks/task_40_std_to_curated.py
+            base_parameters:
+              <<: *common_base_parameters
+
+        - task_key: on_complete
+          depends_on:
+            - task_key: check_after_main
+              outcome: "false"
+            - task_key: check_after_ingest
+              outcome: "false"
+            - task_key: check_after_land_to_raw
+              outcome: "false"
+            - task_key: check_after_raw_to_std
+              outcome: "false"
+            - task_key: check_run_std_to_curated
+              outcome: "false"
+            - task_key: std_to_curated
+          run_if: AT_LEAST_ONE_SUCCESS
+          #job_cluster_key: Job_cluster
+          existing_cluster_id: ${var.job_cluster_id}
+          notebook_task:
+            notebook_path: ./tasks/task_90_on_complete.py
+            base_parameters:
+              <<: *common_base_parameters
+
+        - task_key: on_failure
+          depends_on:
+            - task_key: ingest
+            - task_key: land_to_raw
+            - task_key: raw_to_std
+            - task_key: std_to_curated
+          run_if: AT_LEAST_ONE_FAILED
+          existing_cluster_id: ${var.job_cluster_id}
+          notebook_task:
+            notebook_path: ./tasks/task_91_on_failure.py
+            base_parameters:
+              <<: *common_base_parameters
+targets:
+  dev:
+    default: true
+    variables:
+      azure_tenant_id_key: "app-2b501945-5940-4527-9cdd-51a07b77ceb7-tenantid"
+      service_spn_id_key: "app-2b501945-5940-4527-9cdd-51a07b77ceb7-appid"
+      service_spn_secrete_key: "app-2b501945-5940-4527-9cdd-51a07b77ceb7-secret"
+      internal_databricks_workspace_url: "https://adb-1700301391505163.3.azuredatabricks.net"
+      internal_databricks_resource_id: "/subscriptions/1de5fd2d-2313-461a-acc4-07cdc509cdf4/resourceGroups/lake-cac-npd-rg-devplatform/providers/Microsoft.Databricks/workspaces/lake-cac-npd-dbw-devuc01"
+      internal_dis_job_id: "140598343443137"
+      external_databricks_workspace_url: "https://adb-7405611352003885.5.azuredatabricks.net"
+      external_databricks_resource_id: "/subscriptions/1de5fd2d-2313-461a-acc4-07cdc509cdf4/resourceGroups/lake-cac-npd-rg-devplatform/providers/Microsoft.Databricks/workspaces/lake-cac-npd-dbw-devdmz01"
+      external_dis_job_id: ""
+      datamart_endpoints: '[{"URL":"https://api-dev.bank-banque-canada.ca/datamart/v1/api/uc/pipeline/ingest", "SCOPE":"api://1dae7513-113d-460e-a2a8-3f4045ca7e25/.default"}]'
+      job_runas_account: "3fc6e6c5-eaa5-4948-ba9a-d3ceebf437db"
+      job_alert_emails:
+        - dda-support-dev@bank-banque-canada.ca
+      job_notify_emails: '{"DDA":"dda-support-dev@bank-banque-canada.ca","DM":"dda-support-dev@bank-banque-canada.ca"}'
+      job_cluster_policy_id: "00036D9F32BEB29D"
+      job_cluster_id: "0330-175248-n1oyefmi"
+
+    resources:
+      jobs:
+        OEDS_SAMPLE_JOB:
+          permissions:
+            - group_name: "lake_aeengsupport_rusr_inda"
+              level: CAN_MANAGE
+            - service_principal_name: "2b501945-5940-4527-9cdd-51a07b77ceb7"
+              level: CAN_MANAGE_RUN
+            - service_principal_name: "bcb4909e-06b7-411a-97bd-366fe459b759"
+              level: CAN_MANAGE_RUN
+            - service_principal_name: "b1d31712-0160-4825-ac5c-ec70e15ad0fd"
+              level: CAN_MANAGE_RUN
+            - service_principal_name: "07b85d8e-700b-4706-84ea-afa60a3ffedd"
+              level: CAN_MANAGE_RUN
+
+  stg:
+    mode: production
+    workspace:
+      host: https://adb-13344226264609.9.azuredatabricks.net
+    variables:
+      debug: true
+
+  prd:
+    mode: production
+    workspace:
+      host: https://adb-642333651898149.9.azuredatabricks.net
+    variables:
+      debug: false

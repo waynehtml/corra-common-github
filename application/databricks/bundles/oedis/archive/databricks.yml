@@ -1,0 +1,119 @@
+# This is a Databricks asset bundle definition for common.
+# See https://docs.databricks.com/dev-tools/bundles/index.html for documentation.
+bundle:
+  name: oedis
+
+workspace:
+  # Put all bundle-managed content under the project folder
+  root_path: /Workspace/oedataservices/.bundle/${bundle.name}
+
+variables:
+  cluster_policy_id:
+    default: ""
+  job_runas_account:
+    default: ""
+  job_alert_email:
+    default: []
+  debug:
+    default: true
+  home_dir:
+    default: "/tmp/oedis/stage"
+  home_vol:
+    default: "/Volumes/dev_application_cat/oedisint_db/land-oedataservices/oedis/stage"
+
+resources:
+  jobs:
+    OEDS_DIS_JOB:
+      name: OEDS-DIS-JOB
+      description: OEDS Data Ingestion Service
+
+      run_as:
+        # Run as triton service account
+        service_principal_name: ${var.job_runas_account}
+
+      parameters:
+        - name: env
+          default: ${bundle.target}
+        - name: config
+          default: ""
+        - name: rundate
+          default: ""
+        - name: params
+          default: ""
+        - name: zip
+          default: "false"
+        - name: debug
+          default: ${var.debug}
+
+      email_notifications:
+        on_failure: ${var.job_alert_email}
+
+      tags:
+        App: OEDS_DIS
+
+      job_clusters:
+        - job_cluster_key: Job_cluster
+          new_cluster:
+            policy_id: ${var.cluster_policy_id}
+            spark_version: 16.4.x-scala2.13
+            custom_tags:
+              Project: OEDS_DIS
+            init_scripts:
+              - workspace:
+                  destination: ${workspace.file_path}/cluster/init.sh
+            autoscale:
+              min_workers: 1
+              max_workers: 2
+
+      tasks:
+        - task_key: main
+          job_cluster_key: Job_cluster
+          notebook_task:
+            notebook_path: ../src/main
+            base_parameters:
+              timezone: "America/New_York"
+              home_dir: "${var.home_dir}"
+              home_vol: "${var.home_vol}"
+              job_name: "{{job.name}}"
+              job_id: "{{job.id}}"
+              job_run_id: "{{job.run_id}}"
+              job_trigger_type: "{{job.trigger.type}}"
+              workspace_url: "{{workspace.url}}"
+
+targets:
+  dev:
+    default: true
+    workspace:
+      host: https://adb-1700301391505163.3.azuredatabricks.net
+    variables:
+      # 
+      cluster_policy_id: "00036D9F32BEB29D"
+      # lake-dev-oedisint
+      job_runas_account: "3fc6e6c5-eaa5-4948-ba9a-d3ceebf437db"
+      job_alert_email:
+        - dda-support-dev@bank-banque-canada.ca
+
+    resources:
+      jobs:
+        OEDS_DIS_JOB:
+          permissions:
+            # AE engineers
+            - group_name: "lake_aeengsupport_rusr_inda"
+              level: CAN_MANAGE
+            # lake-dev-oedataservices-services
+            - service_principal_name: "2b501945-5940-4527-9cdd-51a07b77ceb7"
+              level: CAN_MANAGE_RUN
+
+  stg:
+    mode: production
+    workspace:
+      host: https://adb-13344226264609.9.azuredatabricks.net
+    variables:
+      debug: true
+
+  prd:
+    mode: production
+    workspace:
+      host: https://adb-642333651898149.9.azuredatabricks.net
+    variables:
+      debug: false

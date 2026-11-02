@@ -1,0 +1,15 @@
+{
+  "id": "extract",
+  "handler": "oedis.handler.archive.extract",
+  "params": {
+    "requests": [
+      {
+        "src_dir": "raw/archives",
+        "include": "*.tar.gz",
+        "format": "auto",
+        "exclude": "bad/*_corrupt.tar.gz",
+        "recursive": true
+      }
+    ]
+  }
+}

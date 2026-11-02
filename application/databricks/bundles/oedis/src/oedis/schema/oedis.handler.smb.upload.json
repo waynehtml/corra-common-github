@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oedis/schema/oedis.handler.smb.upload.json",
+  "title": "Task params for oedis.handler.smb.upload",
+  "description": "Configuration for uploading files from the task inbox to an SMB share.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "connection",
+    "requests"
+  ],
+  "properties": {
+    "connection": {
+      "type": "object",
+      "description": "SMB connection settings used to resolve the UNC share root and optional credentials.",
+      "additionalProperties": false,
+      "required": [
+        "unc"
+      ],
+      "properties": {
+        "unc": {
+          "type": "string",
+          "minLength": 1,
+          "description": "UNC root path for the SMB share, for example \\\\FS01\\FinanceShare or \\\\FS01\\FinanceShare\\Outbound\\CORRA."
+        },
+        "auth": {
+          "type": "object",
+          "description": "Optional SMB credentials passed to register_session().",
+          "additionalProperties": false,
+          "properties": {
+            "username": {
+              "type": "string",
+              "description": "Optional SMB username."
+            },
+            "password": {
+              "type": "string",
+              "description": "Optional SMB password."
+            }
+          }
+        }
+      }
+    },
+    "requests": {
+      "type": "array",
+      "description": "List of SMB upload instructions. Each item describes one local source selection and how matched files should be copied to the SMB destination.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "description": "One SMB upload request.",
+        "additionalProperties": false,
+        "properties": {
+          "dst_dir": {
+            "type": "string",
+            "description": "Remote destination directory relative to connection.unc. Leave empty to upload directly into the UNC root."
+          },
+          "src_dir": {
+            "type": "string",
+            "description": "Source directory under ctx.inbox. Must be a relative local path when provided."
+          },
+          "include": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "description": "File match pattern or list of patterns to include. Matching is attempted against both the file name and the path relative to src_dir. Prefer recursive=true with patterns like '*.csv' instead of '**/*.csv'.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exclude": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "description": "File match pattern or list of patterns to exclude after include matching. Matching is attempted against both the file name and the path relative to src_dir.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "recursive": {
+            "type": "boolean",
+            "description": "When true, walk subdirectories under src_dir. When false, only files directly under src_dir are considered."
+          },
+          "delete_source_file": {
+            "type": "boolean",
+            "description": "When true, delete the local source file after a successful upload and remote size validation."
+          }
+        }
+      }
+    }
+  }
+}

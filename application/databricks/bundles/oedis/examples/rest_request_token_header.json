@@ -1,0 +1,28 @@
+{
+  "id": "request",
+  "handler": "oedis.handler.rest.request",
+  "params": {
+    "connection": {
+      "timeout_sec": 60,
+      "auth": {
+        "type": "none"
+      },
+      "headers": {
+        "Accept": "application/json",
+        "Content-Type": "text/plain",
+        "Authorization": "Bearer {{ keyvault(scope=\"dis-secrets\", key=\"token_value\") }}"
+      }
+    },
+    "requests": [
+      {
+        "id": "submit_status",
+        "method": "POST",
+        "url": "https://example/api/data/status",
+        "body": {
+          "type": "raw",
+          "value": "{\"status\":\"ready\"}"
+        }
+      }
+    ]
+  }
+}

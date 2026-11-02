@@ -1,0 +1,49 @@
+#!/bin/bash
+set -euo pipefail
+
+TARGET_ENV="${1:-dev}"
+CLUSTER_BASE_PATH="dbfs:/Volumes/${TARGET_ENV}_application_cat/oedisint_db/config-oedataservices/template/cluster"
+CLUSTER_INIT_PATH="${CLUSTER_BASE_PATH}/.init"
+CLUSTER_WHEELHOUSE_PATH="${CLUSTER_BASE_PATH}/.wheelhouse"
+LOCAL_CLUSTER_DIR="./src/cluster"
+
+echo "TARGET_ENV=$TARGET_ENV"
+echo "CLUSTER_BASE_PATH=$CLUSTER_BASE_PATH"
+echo "CLUSTER_INIT_PATH=$CLUSTER_INIT_PATH"
+echo "CLUSTER_WHEELHOUSE_PATH=$CLUSTER_WHEELHOUSE_PATH"
+
+databricks fs mkdir "$CLUSTER_BASE_PATH" --target "$TARGET_ENV"
+databricks fs mkdir "$CLUSTER_INIT_PATH" --target "$TARGET_ENV"
+databricks fs mkdir "$CLUSTER_WHEELHOUSE_PATH" --target "$TARGET_ENV"
+
+TMP_ENV_FILE="$(mktemp)"
+trap 'rm -f "$TMP_ENV_FILE"' EXIT
+
+cat > "$TMP_ENV_FILE" <<EOF
+#!/bin/bash
+export ENV="${TARGET_ENV}"
+export CLUSTER_BASE_PATH="${CLUSTER_BASE_PATH}"
+export CLUSTER_INIT_PATH="${CLUSTER_INIT_PATH}"
+export CLUSTER_WHEELHOUSE_PATH="${CLUSTER_WHEELHOUSE_PATH}"
+EOF
+
+echo "Copy generated env.sh to local folder"
+databricks fs cp "$TMP_ENV_FILE" \
+  "${LOCAL_CLUSTER_DIR}/env.sh" \
+  --overwrite \
+  --target "$TARGET_ENV"
+
+echo "Copy cluster files to remote folder"
+find "$LOCAL_CLUSTER_DIR" -maxdepth 1 -type f | while IFS= read -r file; do
+  name="$(basename "$file")"
+  echo "Copying $file -> ${CLUSTER_INIT_PATH}/${name}"
+  databricks fs cp "$file" \
+    "${CLUSTER_INIT_PATH}/${name}" \
+    --overwrite \
+    --target "$TARGET_ENV"
+done
+
+echo "##vso[task.setvariable variable=BUNDLE_CLUSTER_INIT_DIR]$CLUSTER_INIT_PATH"
+echo "##vso[task.setvariable variable=BUNDLE_CLUSTER_WHEELHOUSE_PATH]$CLUSTER_WHEELHOUSE_PATH"
+
+echo "Done"

@@ -1,0 +1,22 @@
+{
+  "PARAM_EVERBRIDGE_TEST_EMAIL": {
+    "type": "String",
+    "value": "dda-support-dev@bank-banque-canada.ca"
+  },
+  "PARAM_EVERBRIDGE_PROD_EMAIL": {
+    "type": "String",
+    "value": "dds_oeds-453003085618156@integration.everbridge.us"
+  },
+  "PARAM_TEST_EMAIL_TAG": {
+    "type": "String",
+    "value": "[TEST]"
+  },
+  "PARAM_EMAIL_CHECK_INTERVAL": {
+    "type": "Int",
+    "value": 3
+  },
+  "PARAM_FILTER_CONDITION": {
+    "type": "String",
+    "value": "(subject:corra AND (subject:failed OR subject:error))\n"
+  }
+}

@@ -1,0 +1,2 @@
+oeds-common~=1.0
+certifi==2026.2.25

@@ -1,0 +1,74 @@
+{
+  "pipeline": "storage_volume_to_volume",
+  "tasks": [
+    {
+      "id": "download",
+      "handler": "oedis.handler.storage.download",
+      "params": {
+        "connection": {
+          "uri": "/Volumes/dev_application_cat/oedisint_db/land-oedataservices/oedis/data/"
+        },
+        "requests": [
+          {
+            "include": "*",
+            "recursive": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "decrypt-7z",
+      "handler": "oedis.handler.archive.extract",
+      "params": {
+        "credential": {
+          "passphrase": "123456"
+        },
+        "requests": [
+          {
+            "src_dir": "",
+            "include": [
+              "*.7z"
+            ],
+            "format": "7z",
+            "dst_dir": "",
+            "delete_source_file": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "decrypt-zip",
+      "handler": "oedis.handler.archive.extract",
+      "params": {
+        "credential": {
+          "passphrase": "654321"
+        },
+        "requests": [
+          {
+            "src_dir": "",
+            "include": [
+              "*.zip"
+            ],
+            "format": "zip",
+            "dst_dir": "",
+            "delete_source_file": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "upload",
+      "handler": "oedis.handler.storage.upload",
+      "params": {
+        "connection": {
+          "uri": "/Volumes/dev_application_cat/oedisint_db/land-oedataservices/oedis/data-decrypt/"
+        },
+        "requests": [
+          {
+            "recursive": true
+          }
+        ]
+      }
+    }
+  ]
+}

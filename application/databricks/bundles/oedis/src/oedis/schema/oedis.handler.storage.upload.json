@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oedis/schema/oedis.handler.storage.upload.json",
+  "title": "Task params for oedis.handler.storage.upload",
+  "description": "Configuration for copying files from the task inbox into a storage base URI.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "connection",
+    "requests"
+  ],
+  "properties": {
+    "connection": {
+      "type": "object",
+      "description": "Storage connection settings used to resolve the remote base path.",
+      "additionalProperties": false,
+      "required": [
+        "uri"
+      ],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Remote storage base path or URI, for example /Volumes/my_catalog/my_schema/my_volume or abfss://container@account.dfs.core.windows.net/curated."
+        }
+      }
+    },
+    "requests": {
+      "type": "array",
+      "description": "List of upload instructions. Each item describes which inbox files to match and where they should be copied under connection.uri.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "description": "One storage upload request.",
+        "additionalProperties": false,
+        "properties": {
+          "src_dir": {
+            "type": "string",
+            "description": "Source directory under ctx.inbox. Leave empty or omit it to read directly from ctx.inbox. Must be a relative local path when provided."
+          },
+          "dst_dir": {
+            "type": "string",
+            "description": "Remote destination directory relative to connection.uri. Leave empty or omit it to upload directly into the base URI. Absolute paths and full URIs are rejected."
+          },
+          "include": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "description": "File match pattern or list of patterns to include. When recursive is false, matching is against file names only. When recursive is true, matching is attempted against both file names and paths relative to src_dir. Prefer recursive=true with patterns like '*.csv' instead of '**/*.csv'.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exclude": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "description": "File match pattern or list of patterns to exclude after include matching. When recursive is false, matching is against file names only. When recursive is true, matching is attempted against both file names and paths relative to src_dir.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "recursive": {
+            "type": "boolean",
+            "description": "When true, walk subdirectories under the resolved local source root. When false, only files directly under that root are considered."
+          }
+        }
+      }
+    }
+  }
+}

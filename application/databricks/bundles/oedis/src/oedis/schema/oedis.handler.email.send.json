@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oedis/schema/oedis.handler.email.send.json",
+  "title": "Task params for oedis.handler.email.send",
+  "description": "Configuration for sending an email through Microsoft Graph with optional staged file attachments.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "connection",
+    "message"
+  ],
+  "properties": {
+    "connection": {
+      "type": "object",
+      "description": "Microsoft Graph connection settings.",
+      "additionalProperties": false,
+      "required": [
+        "auth"
+      ],
+      "properties": {
+        "auth": {
+          "type": "object",
+          "description": "Client credentials used to request a Graph access token.",
+          "additionalProperties": false,
+          "required": [
+            "tenant_id",
+            "client_id",
+            "client_secret"
+          ],
+          "properties": {
+            "tenant_id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Microsoft Entra tenant ID."
+            },
+            "client_id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Application client ID."
+            },
+            "client_secret": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Application client secret."
+            }
+          }
+        }
+      }
+    },
+    "message": {
+      "type": "object",
+      "description": "Email message settings.",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to",
+        "body"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Sender mailbox address used in /users/{sender}/sendMail."
+        },
+        "to": {
+          "description": "Recipient email address or list of addresses.",
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          ]
+        },
+        "subject": {
+          "type": "string",
+          "description": "Email subject line."
+        },
+        "body": {
+          "type": "object",
+          "description": "Inline body content or a bundled template file name.",
+          "additionalProperties": false,
+          "properties": {
+            "format": {
+              "type": "string",
+              "description": "Graph message body content type."
+            },
+            "content": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Inline body content."
+            },
+            "template": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Bundled template file name from oedis/template."
+            }
+          },
+          "oneOf": [
+            {
+              "required": [
+                "content"
+              ],
+              "not": {
+                "required": [
+                  "template"
+                ]
+              }
+            },
+            {
+              "required": [
+                "template"
+              ],
+              "not": {
+                "required": [
+                  "content"
+                ]
+              }
+            }
+          ]
+        },
+        "attachments": {
+          "type": "array",
+          "description": "Optional staged-file attachment match requests. Each request is resolved relative to ctx.inbox.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "src_dir": {
+                "type": "string",
+                "description": "Inbox-relative source directory to read from. Empty or omitted means ctx.inbox."
+              },
+              "include": {
+                "type": [
+                  "string",
+                  "array"
+                ],
+                "description": "File match pattern or list of patterns to include, relative to src_dir.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "exclude": {
+                "type": [
+                  "string",
+                  "array"
+                ],
+                "description": "File match pattern or list of patterns to exclude after include matching, relative to src_dir.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "recursive": {
+                "type": "boolean",
+                "description": "When true, walk subdirectories under src_dir. When false, only files directly under src_dir are considered."
+              }
+            }
+          }
+        }
+      }
+    },
+    "max_total_attachment_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Maximum total attachment size to include in the email."
+    }
+  }
+}

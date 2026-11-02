@@ -1,0 +1,112 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "actions": {
+      "Get_emails_(V3)": {
+        "type": "ApiConnection",
+        "inputs": {
+          "host": {
+            "connection": {
+              "referenceName": "office365"
+            }
+          },
+          "method": "get",
+          "path": "/v3/Mail",
+          "queries": {
+            "fetchOnlyFlagged": false,
+            "searchQuery": "received>=@{addMinutes(utcNow(), mul(int(parameters('PARAM_EMAIL_CHECK_INTERVAL')), -1))} AND @{parameters('PARAM_FILTER_CONDITION')}"
+          }
+        },
+        "runAfter": {}
+      },
+      "For_each_-_email": {
+        "type": "Foreach",
+        "foreach": "@variables('var_emails')",
+        "actions": {
+          "Send_an_email_(V2)_-_Send_to_Everbridge": {
+            "type": "ApiConnection",
+            "inputs": {
+              "host": {
+                "connection": {
+                  "referenceName": "office365"
+                }
+              },
+              "method": "post",
+              "body": {
+                "To": "@{outputs('Compose_-_recipient')}",
+                "Subject": "@concat('CORRA FAILED on ', toUpper(outputs('Compose_-_source')), ' - Immediate Action Required')",
+                "Body": "<p class=\"editor-paragraph\">@{items('For_each_-_email')?['body']}</p>",
+                "Importance": "Normal"
+              },
+              "path": "/v2/Mail"
+            },
+            "runAfter": {
+              "Compose_-_source": [
+                "SUCCEEDED"
+              ],
+              "Compose_-_recipient": [
+                "SUCCEEDED"
+              ]
+            }
+          },
+          "Compose_-_source": {
+            "type": "Compose",
+            "inputs": "@if(\r\n  contains(toLower(item()?['subject']), 'sftp'),\r\n  'Sftp',\r\n  if(\r\n    contains(toLower(item()?['subject']), 'adf'),\r\n    'ADF',\r\n    if(\r\n      contains(toLower(item()?['subject']), 'databricks'),\r\n      'Databricks',\r\n      'Unknown'\r\n    )\r\n  )\r\n)"
+          },
+          "Compose_-_recipient": {
+            "type": "Compose",
+            "inputs": "@if(\r\n  contains(\r\n    toLower(items('For_each_-_email')?['subject']),\r\n    toLower(parameters('PARAM_TEST_EMAIL_TAG'))\r\n  ),\r\n  parameters('PARAM_EVERBRIDGE_TEST_EMAIL'),\r\n  parameters('PARAM_EVERBRIDGE_PROD_EMAIL')\r\n)"
+          }
+        },
+        "runAfter": {
+          "Initialize_variables_-_emails": [
+            "SUCCEEDED"
+          ]
+        },
+        "runtimeConfiguration": {
+          "concurrency": {
+            "repetitions": 20
+          }
+        }
+      },
+      "Initialize_variables_-_emails": {
+        "type": "InitializeVariable",
+        "inputs": {
+          "variables": [
+            {
+              "name": "var_emails",
+              "type": "array",
+              "value": "@body('Get_emails_(V3)')?['value']"
+            }
+          ]
+        },
+        "runAfter": {
+          "Get_emails_(V3)": [
+            "SUCCEEDED"
+          ]
+        }
+      },
+      "Response": {
+        "type": "Response",
+        "kind": "Http",
+        "inputs": {
+          "statusCode": 200
+        },
+        "runAfter": {
+          "For_each_-_email": [
+            "SUCCEEDED"
+          ]
+        }
+      }
+    },
+    "outputs": {},
+    "triggers": {
+      "HTTP_Request": {
+        "type": "Request",
+        "kind": "Http"
+      }
+    }
+  },
+  "kind": "Stateful"
+}

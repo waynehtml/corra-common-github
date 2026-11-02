@@ -1,0 +1,41 @@
+{
+  "pipeline": "sharepoint",
+  "tasks": [
+    {
+      "id": "download",
+      "handler": "oedis.handler.sharepoint.download",
+      "params": {
+        "connection": {
+          "site": "https://bankofcanada.sharepoint.com/sites/D_CUR_QA",
+          "drive": "Quality Management",
+          "auth": {
+            "tenant_id": "{{keyvault(scope='lake-kv-currency-scope', key='lake-tenant-id-stg')}}",
+            "client_id": "{{keyvault(scope='lake-kv-currency-scope', key='spn-currencyservices-id-stg')}}",
+            "client_secret": "{{keyvault(scope='lake-kv-currency-scope', key='spn-currencyservices-key-stg')}}"
+          }
+        },
+        "requests": [
+          {
+            "src_dir": "Reports-Ottawa/Datalake_Files/prd",
+            "dst_dir": "sharepoint",
+            "include": ["2016*.xlsx"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "upload",
+      "handler": "oedis.handler.storage.upload",
+      "params": {
+        "connection": {
+          "uri": "/Volumes/dev_application_cat/oedisint_db/land-oedataservices/dis/sharepoint/"
+        },
+        "requests": [
+          {
+            "recursive": true
+          }
+        ]
+      }
+    }
+  ]
+}

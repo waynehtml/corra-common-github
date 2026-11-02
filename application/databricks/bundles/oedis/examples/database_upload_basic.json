@@ -1,0 +1,22 @@
+{
+  "id": "upload",
+  "handler": "oedis.handler.database.upload",
+  "params": {
+    "requests": [
+      {
+        "id": "corra_daily_rates",
+        "table": "main.corra_db.tbl_corra_rate_history_snapshot",
+        "write": {
+          "mode": "append",
+          "options": {
+            "overwriteSchema": "false",
+            "mergeSchema": "true"
+          }
+        },
+        "select_sql": "SELECT * FROM {source} WHERE CORRA IS NOT NULL",
+        "file": "corra_daily_rates.parquet",
+        "format": "parquet"
+      }
+    ]
+  }
+}

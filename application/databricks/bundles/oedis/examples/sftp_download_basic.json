@@ -1,0 +1,59 @@
+{
+  "id": "download",
+  "handler": "oedis.handler.sftp.download",
+  "params": {
+    "connection": {
+      "hostname": "sftp.data.example.com",
+      "port": 22,
+      "keepalive_sec": 45,
+      "max_connections": 4,
+      "root_dir": "/drop",
+      "disabled_algorithms": {
+        "pubkeys": [
+          "rsa-sha2-512",
+          "rsa-sha2-256"
+        ]
+      },
+      "auth": {
+        "type": "basic",
+        "username": "svc_reader",
+        "password": "{{keyvault(scope=dis-secrets, key=sftp-password)}}"
+      },
+      "host_verification": {
+        "mode": "fingerprints",
+        "fingerprints": [
+          "sha256:EXAMPLEFINGERPRINTBASE64",
+          "ab:cd:ef:01:23:45:67:89:ab:cd:ef:01:23:45:67:89"
+        ]
+      },
+      "fault_tolerant": {
+        "retries": 3,
+        "retry_interval_sec": 15
+      }
+    },
+    "requests": [
+      {
+        "src_dir": "daily",
+        "dst_dir": "landing/drop",
+        "include": [
+          "*.csv"
+        ],
+        "exclude": [
+          "*_tmp.csv",
+          "*_bad.csv"
+        ],
+        "recursive": true,
+        "updated_after": "2026-04-01T00:00:00Z",
+        "updated_before": "2026-04-02T00:00:00Z",
+        "delete_source_file": true
+      },
+      {
+        "dst_dir": "",
+        "include": [
+          "*.csv"
+        ],
+        "recursive": true
+      }
+    ]
+  }
+}

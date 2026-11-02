@@ -1,0 +1,18 @@
+{
+  "id": "storage-download-volume-to-inbox",
+  "handler": "oedis.handler.storage.download",
+  "params": {
+    "connection": {
+      "uri": "/Volumes/my_catalog/my_schema/my_volume"
+    },
+    "requests": [
+      {
+        "src_dir": "dropzone",
+        "include": [
+          "**/*.csv"
+        ],
+        "recursive": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,329 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oedis/schema/oedis.handler.rest.request.json",
+  "title": "Task params for oedis.handler.rest.request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "requests"
+  ],
+  "properties": {
+    "connection": {
+      "type": "object",
+      "description": "Connection-level defaults for REST requests, including shared headers, retries, and structured authentication.",
+      "additionalProperties": false,
+      "properties": {
+        "timeout_sec": {
+          "type": "number",
+          "description": "HTTP timeout in seconds applied to token requests and data requests.",
+          "minimum": 0
+        },
+        "headers": {
+          "type": "object",
+          "description": "Free-form connection headers passed through to every request. Use string header values only.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "fault_tolerant": {
+          "type": "object",
+          "description": "Default retry settings for all requests.",
+          "additionalProperties": false,
+          "properties": {
+            "retries": {
+              "type": "integer",
+              "description": "Number of retries after the initial attempt.",
+              "minimum": 0
+            },
+            "retry_interval_sec": {
+              "type": "integer",
+              "description": "Delay between retries in seconds.",
+              "minimum": 0
+            },
+            "retry_on_status": {
+              "type": "array",
+              "description": "HTTP status codes that should trigger a retry.",
+              "items": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "auth": {
+          "description": "Structured authentication. Use type none when you want to send manual auth headers through connection.headers instead.",
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "const": "none",
+                  "description": "Disable built-in auth processing."
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "username",
+                "password"
+              ],
+              "properties": {
+                "type": {
+                  "const": "basic",
+                  "description": "Send standard HTTP Basic authentication."
+                },
+                "username": {
+                  "type": "string",
+                  "description": "Basic auth username.",
+                  "minLength": 1
+                },
+                "password": {
+                  "type": "string",
+                  "description": "Basic auth password.",
+                  "minLength": 1
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "token"
+              ],
+              "properties": {
+                "type": {
+                  "const": "bearer",
+                  "description": "Send a standard Authorization Bearer token."
+                },
+                "token": {
+                  "type": "string",
+                  "description": "Bearer token value.",
+                  "minLength": 1
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "name",
+                "value"
+              ],
+              "properties": {
+                "type": {
+                  "const": "api_key",
+                  "description": "Send a header-based API key."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Header name for the API key.",
+                  "minLength": 1
+                },
+                "value": {
+                  "type": "string",
+                  "description": "Header value for the API key.",
+                  "minLength": 1
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "token_url",
+                "client_id",
+                "client_secret"
+              ],
+              "properties": {
+                "type": {
+                  "const": "oauth2_client_credentials",
+                  "description": "Fetch an OAuth2 access token with the client credentials grant."
+                },
+                "token_url": {
+                  "type": "string",
+                  "description": "OAuth2 token endpoint.",
+                  "minLength": 1
+                },
+                "client_id": {
+                  "type": "string",
+                  "description": "OAuth2 client id.",
+                  "minLength": 1
+                },
+                "client_secret": {
+                  "type": "string",
+                  "description": "OAuth2 client secret.",
+                  "minLength": 1
+                },
+                "scope": {
+                  "type": "string",
+                  "description": "Optional OAuth2 scope sent with the token request.",
+                  "minLength": 1
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "requests": {
+      "type": "array",
+      "description": "One or more HTTP requests to execute. Responses are written to the inbox only when file is provided.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Optional request identifier used in logs and errors.",
+            "minLength": 1
+          },
+          "method": {
+            "type": "string",
+            "description": "HTTP method.",
+            "minLength": 1
+          },
+          "url": {
+            "type": "string",
+            "description": "Request URL.",
+            "minLength": 1
+          },
+          "headers": {
+            "type": "object",
+            "description": "Free-form request headers that override both connection.headers and built-in auth headers.",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "body": {
+            "description": "Optional structured request body. When present, both body.type and body.value are required.",
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "value"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "json",
+                    "description": "Send body.value as a JSON request body."
+                  },
+                  "value": {
+                    "description": "JSON request body value.",
+                    "type": [
+                      "object",
+                      "array",
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "value"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "form",
+                    "description": "Send body.value as form data."
+                  },
+                  "value": {
+                    "type": "object",
+                    "description": "Form fields as key-value pairs.",
+                    "additionalProperties": {
+                      "type": [
+                        "string",
+                        "number",
+                        "integer",
+                        "boolean"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "value"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "raw",
+                    "description": "Send body.value as raw request content."
+                  },
+                  "value": {
+                    "type": "string",
+                    "description": "Raw request content."
+                  }
+                }
+              }
+            ]
+          },
+          "file": {
+            "type": "string",
+            "description": "Optional inbox-relative output file path. Leading / is treated as inbox-rooted shorthand and the resolved path must stay inside ctx.inbox.",
+            "minLength": 1
+          },
+          "fault_tolerant": {
+            "type": "object",
+            "description": "Per-request retry overrides.",
+            "additionalProperties": false,
+            "properties": {
+              "retries": {
+                "type": "integer",
+                "description": "Number of retries after the initial attempt.",
+                "minimum": 0
+              },
+              "retry_interval_sec": {
+                "type": "integer",
+                "description": "Delay between retries in seconds.",
+                "minimum": 0
+              },
+              "retry_on_status": {
+                "type": "array",
+                "description": "HTTP status codes that should trigger a retry for this request.",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "params": {
+            "type": "object",
+            "description": "URL query parameters merged into the request URL.",
+            "additionalProperties": {
+              "type": [
+                "string",
+                "number",
+                "integer",
+                "boolean"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

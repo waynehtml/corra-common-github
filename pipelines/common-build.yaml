@@ -1,0 +1,42 @@
+trigger: none # DO NOT CHANGE
+
+variables:
+  pool_name: 'dops-prdagntpl01'
+
+parameters:
+  - name: agent_name
+    displayName: Agent Name
+    type: string
+    default: fcp9ldopsam02
+    values:
+      - fcp9ldopsam01
+      - fcp9ldopsam02
+
+stages:
+  - stage: Build
+    displayName: Build and Publish Wheel
+    jobs:
+      - job: BuildWheel
+        displayName: Build Wheel Artifact
+        pool:
+          name: $(pool_name)
+          demands:
+            - Agent.Name -equals ${{ parameters.agent_name }}
+        steps:
+          - checkout: self
+          - task: UsePythonVersion@0
+            displayName: 'Use Python 3.10'
+            inputs:
+              versionSpec: '3.10'
+          - script: |
+              python -m pip install -U pip
+              python -m pip install -U build
+              python -m build --wheel
+            displayName: 'Build wheel'
+            workingDirectory: 'application/databricks/bundles/common/utility/python'
+          - task: PublishPipelineArtifact@1
+            displayName: 'Publish wheel artifact'
+            inputs:
+              targetPath: '$(Build.SourcesDirectory)/application/databricks/bundles/common/utility/python/dist'
+              artifactName: 'python-wheel'
+              publishLocation: 'pipeline'

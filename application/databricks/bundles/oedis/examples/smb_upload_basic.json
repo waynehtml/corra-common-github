@@ -1,0 +1,23 @@
+{
+  "id": "upload",
+  "handler": "oedis.handler.smb.upload",
+  "params": {
+    "connection": {
+      "unc": "\\\\FS01\\FinanceShare\\Outbound\\CORRA",
+      "auth": {
+        "username": "{{smb_username}}",
+        "password": "{{smb_password}}"
+      }
+    },
+    "requests": [
+      {
+        "dst_dir": "test\\delivered",
+        "src_dir": "extract/corra",
+        "include": ["*.csv"],
+        "exclude": ["*_tmp.csv"],
+        "recursive": true,
+        "delete_source_file": false
+      }
+    ]
+  }
+}

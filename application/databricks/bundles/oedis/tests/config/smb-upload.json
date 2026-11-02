@@ -1,0 +1,37 @@
+{
+  "pipeline": "volume_to_smb",
+  "tasks": [
+    {
+      "id": "download",
+      "handler": "oedis.handler.storage.download",
+      "params": {
+        "connection": {
+          "uri": "/Volumes/dev_application_cat/oedisint_db/land-oedataservices/dis/smb"
+        },
+        "requests": [
+          {
+            "include": ["requirements.txt"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "upload",
+      "handler": "oedis.handler.smb.upload",
+      "params": {
+        "connection": {
+          "unc": "\\\\svmip-fsaas-01.bocad.bank-banque-canada.ca\\home\\asd\\datastg\\isdata\\csep\\ais\\isSource\\CSA\\LANDING",
+          "auth": {
+            "username": "bocad\\crdp_dscurr_oppl_s",
+            "password": "{{keyvault(scope='lake-kv-currency-scope', key='crdp-dscurr-oppl-s-pass')}}"
+          }
+        },
+        "requests": [
+          {
+            "include": ["*.txt"]
+          }
+        ]
+      }
+    }
+  ]
+}

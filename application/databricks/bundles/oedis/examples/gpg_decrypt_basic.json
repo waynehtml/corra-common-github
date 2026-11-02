@@ -1,0 +1,19 @@
+{
+  "id": "decrypt",
+  "handler": "oedis.handler.gpg.decrypt",
+  "params": {
+    "credential": {
+      "private_key": "{{ keyvault(scope='dis-secrets', key='ops-gpg-private-key') }}"
+    },
+    "requests": [
+      {
+        "src_dir": "raw/drop",
+        "dst_dir": "staged/decrypted",
+        "include": ["*.pgp"],
+        "recursive": true,
+        "exclude": ["*_test.pgp"]
+      }
+    ]
+  }
+}
+

@@ -1,0 +1,24 @@
+{
+  "id": "download",
+  "handler": "oedis.handler.smb.download",
+  "params": {
+    "connection": {
+      "unc": "\\\\FS01\\FinanceShare\\Inbound\\CORRA",
+      "auth": {
+        "username": "{{smb_username}}",
+        "password": "{{smb_password}}"
+      }
+    },
+    "requests": [
+      {
+        "src_dir": "test\\abc",
+        "include": ["*.csv"],
+        "exclude": ["*_tmp.csv"],
+        "updated_after": "2026-02-01T00:00:00Z",
+        "updated_before": "2026-02-02T00:00:00Z",
+        "recursive": false,
+        "delete_source_file": true
+      }
+    ]
+  }
+}

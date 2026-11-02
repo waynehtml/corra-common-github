@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oedis/schema/oedis.handler.amq.send.json",
+  "title": "Task params for oedis.handler.amq.send",
+  "description": "Configuration for sending one or more AMQP 1.0 messages over TLS with mutual TLS client certificate authentication.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "connection",
+    "requests"
+  ],
+  "properties": {
+    "connection": {
+      "type": "object",
+      "description": "AMQP connection settings shared by all send requests.",
+      "additionalProperties": false,
+      "required": [
+        "uri",
+        "auth"
+      ],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^amqps://.+",
+          "description": "AMQP 1.0 over TLS broker URI, for example amqps://broker.example.com:443."
+        },
+        "timeout_sec": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Optional connection and blocking operation timeout in seconds."
+        },
+        "fault_tolerant": {
+          "type": "object",
+          "description": "Retry settings for opening the AMQP connection.",
+          "additionalProperties": false,
+          "properties": {
+            "retries": {
+              "type": "integer",
+              "description": "Number of retries after the initial connection attempt.",
+              "minimum": 0
+            },
+            "retry_interval_sec": {
+              "type": "integer",
+              "description": "Delay between connection retries in seconds.",
+              "minimum": 0
+            }
+          }
+        },
+        "auth": {
+          "type": "object",
+          "description": "Mutual TLS client certificate authentication settings.",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "certificate",
+            "private_key"
+          ],
+          "properties": {
+            "type": {
+              "const": "client_certificate",
+              "description": "Use mutual TLS with a client certificate and private key."
+            },
+            "certificate": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Client certificate as PEM text or base64-encoded PEM text."
+            },
+            "private_key": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Client private key as PEM text or base64-encoded PEM text."
+            },
+            "private_key_passphrase": {
+              "type": "string",
+              "description": "Optional private key passphrase."
+            },
+            "ca_certificate": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Optional CA certificate as PEM text or base64-encoded PEM text."
+            }
+          }
+        }
+      }
+    },
+    "requests": {
+      "type": "array",
+      "description": "AMQP send requests processed sequentially under one connection.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "queue",
+          "body"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional request identifier used in logs and errors."
+          },
+          "queue": {
+            "type": "string",
+            "minLength": 1,
+            "description": "AMQP target address or queue name."
+          },
+          "body": {
+            "type": "string",
+            "description": "Message body sent as a UTF-8 AMQP message body string."
+          },
+          "properties": {
+            "type": "object",
+            "description": "Optional AMQP application properties sent with the message.",
+            "additionalProperties": {
+              "type": [
+                "string",
+                "number",
+                "integer",
+                "boolean",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

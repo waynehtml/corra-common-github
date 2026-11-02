@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oedis/schema/oedis.handler.file.move.json",
+  "title": "Task params for oedis.handler.file.move",
+  "description": "Configuration for moving files inside the task inbox using the file handler.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "requests"
+  ],
+  "properties": {
+    "requests": {
+      "type": "array",
+      "description": "List of move instructions. Each item describes which inbox files to match and where they should be moved.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "src_dir": {
+            "type": "string",
+            "description": "Inbox-relative source directory to read from. Empty or omitted means ctx.inbox. The resolved path must stay inside ctx.inbox."
+          },
+          "dst_dir": {
+            "type": "string",
+            "description": "Inbox-relative destination directory to move files into. Empty or omitted means ctx.inbox. The resolved path must stay inside ctx.inbox."
+          },
+          "include": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "description": "File match pattern or list of patterns to include. Matching is always against the candidate path relative to src_dir. It does not do separate basename matching.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exclude": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "description": "File match pattern or list of patterns to exclude after include matching. Matching is always against the candidate path relative to src_dir.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "recursive": {
+            "type": "boolean",
+            "description": "When true, walk subdirectories under src_dir. When false, only files directly under src_dir are considered."
+          },
+          "dst_name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional destination filename override. This is only valid when exactly one source file matches, and it replaces only the final path segment under the preserved relative parent path."
+          }
+        }
+      }
+    }
+  }
+}

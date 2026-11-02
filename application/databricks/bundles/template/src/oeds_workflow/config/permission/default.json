@@ -1,0 +1,32 @@
+{
+  "catalogs": [
+    "application_cat"
+  ],
+  "groups": {
+    "dev": {
+      "aeeng": "lake_aeengsupport_rusr_inda",
+      "dataopen": "lake_dataopen_rusr_inda"
+    },
+    "stg": {
+      "aeeng": "lake_aeengsupport_rusr_inpa",
+      "dataopen": "lake_dataopen_rusr_inpa"
+    },
+    "prd": {
+      "aeeng": "lake_aeengsupport_rusr_inpa",
+      "dataopen": "lake_dataopen_rusr_inpa"
+    }
+  },
+  "permissions": [
+    {
+      "tbl_sample": {
+        "write": ["aeeng"]
+      },
+      "tbl_ts": {
+        "read": ["dataopen", "aeeng"]
+      },
+      "vw_sample": {
+        "read": ["dataopen", "aeeng"]
+      }
+    }
+  ]
+}

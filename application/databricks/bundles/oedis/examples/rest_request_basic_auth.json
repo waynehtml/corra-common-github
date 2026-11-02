@@ -1,0 +1,42 @@
+{
+  "id": "request",
+  "handler": "oedis.handler.rest.request",
+  "params": {
+    "connection": {
+      "timeout_sec": 60,
+      "headers": {
+        "Accept": "application/json"
+      },
+      "auth": {
+        "type": "basic",
+        "username": "{{ keyvault(scope=\"dis-secrets\", key=\"api_user\") }}",
+        "password": "{{ keyvault(scope=\"dis-secrets\", key=\"api_password\") }}"
+      },
+      "fault_tolerant": {
+        "retries": 3,
+        "retry_interval_sec": 30,
+        "retry_on_status": [
+          429,
+          500,
+          502,
+          503,
+          504
+        ]
+      }
+    },
+    "requests": [
+      {
+        "id": "get_report",
+        "method": "GET",
+        "url": "https://example/api/report",
+        "headers": {
+          "X-Request-Id": "{{ rundate }}"
+        },
+        "params": {
+          "date": "{{ rundate }}"
+        },
+        "file": "raw/report_{{ rundate }}.json"
+      }
+    ]
+  }
+}

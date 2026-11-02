@@ -1,0 +1,36 @@
+{
+  "id": "request",
+  "handler": "oedis.handler.rest.request",
+  "params": {
+    "connection": {
+      "timeout_sec": 45,
+      "headers": {
+        "Accept": "text/csv"
+      }
+    },
+    "requests": [
+      {
+        "id": "export_csv",
+        "method": "POST",
+        "url": "https://example/api/export",
+        "body": {
+          "type": "form",
+          "value": {
+            "start_date": "{{ delta(days=-1) }}",
+            "end_date": "{{ rundate }}",
+            "format": "csv"
+          }
+        },
+        "fault_tolerant": {
+          "retries": 1,
+          "retry_interval_sec": 5,
+          "retry_on_status": [
+            500,
+            502,
+            503
+          ]
+        }
+      }
+    ]
+  }
+}

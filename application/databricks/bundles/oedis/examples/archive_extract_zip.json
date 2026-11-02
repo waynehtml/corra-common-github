@@ -1,0 +1,16 @@
+{
+  "id": "extract",
+  "handler": "oedis.handler.archive.extract",
+  "params": {
+    "requests": [
+      {
+        "src_dir": "raw",
+        "include": "*.zip",
+        "format": "zip",
+        "dst_dir": "staged/reports",
+        "delete_source_file": true,
+        "recursive": false
+      }
+    ]
+  }
+}

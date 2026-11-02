@@ -1,0 +1,59 @@
+# --------------------------------------------------------------------------------------------------------------------
+# To migrate this pipeline to another project/repo, in the variables section, update:
+# 1. source_folder: update this if your Logic App folder path is different.
+# 2. dev_logicApp_name: update this to your dev Logic App name.
+# 3. stg_logicApp_name: update this to your stg Logic App name.
+# 4. prd_logicApp_name: update this to your prd Logic App name.
+# 5. pool_name: use the appropriate agent pool for the new project.
+# 6. sc_dev: update this to your dev service connection.
+# 7. sc_stg: update this to your stg service connection.
+# 8. sc_prd: update this to your prd service connection.
+# --------------------------------------------------------------------------------------------------------------------
+
+trigger: none # DO NOT CHANGE
+
+# Variables that you need to change as per your project
+variables:
+  # Folder where the Logic App files are stored
+  source_folder: '$(System.DefaultWorkingDirectory)/application/lake-cac-npd-logic-devoedataservices01'
+
+  # Logic App name variable map based on environment
+  dev_logicApp_name: 'lake-cac-npd-logic-devoedataservices01'
+  stg_logicApp_name: 'lake-cac-prd-logic-stgoedataservices01'
+  prd_logicApp_name: 'lake-cac-prd-logic-prdoedataservices01'
+
+  # Name of pool you want to use
+  pool_name: 'dops-prdagntpl01' 
+
+  # Service connection variable map based on environment
+  sc_dev: lake-dscn-bocqa01
+  sc_stg: lake-dscn-bocad01
+  sc_prd: lake-dscn-bocad01
+
+# Input parameter for selecting environment
+parameters:
+  - name: environment
+    displayName: Target Environment
+    type: string
+    default: dev
+    values:
+      - dev
+      - stg
+      - prd
+
+resources:
+  repositories:
+    - repository: lake-devops                     # Reference shared DevOps repo
+      type: git
+      name: lake-devops/lake-devops
+      ref: refs/heads/main
+
+# Reuse the shared logicapp-deploy-template from lake-devops
+stages:
+  - template: pipelines/logic_app/logicapp-deploy-template.yaml@lake-devops
+    parameters:
+      environment: ${{ parameters.environment }} # Extract environment (stg/prd) from parameter
+      logicApp_name: ${{ variables[format('{0}_logicApp_name', parameters.environment)] }} # Extract the Logic App name from the variable created above
+      source_folder: ${{ variables.source_folder }} # Referencing the source_folder variable created above
+      pool_name: ${{ variables.pool_name }} # Get the pool_name from the variable created above
+      service_connection: ${{ variables[format('sc_{0}', parameters.environment)] }} # Dynamically extract prefix (stg/prd) from environment parameter to lookup service connection

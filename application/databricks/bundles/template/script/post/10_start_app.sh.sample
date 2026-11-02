@@ -1,0 +1,23 @@
+#!/bin/bash
+set -euo pipefail
+
+TARGET_ENV="${1:-dev}"
+
+echo "Discovering apps in Databricks bundle for target: $TARGET_ENV"
+
+apps=$(databricks bundle summary \
+  --target "$TARGET_ENV" \
+  --output json | jq -r '.resources.apps | keys[]?')
+
+if [ -z "$apps" ]; then
+  echo "No apps found in the bundle. Nothing to run."
+  exit 0
+fi
+
+for app in $apps; do
+  echo "Starting app: $app"
+  databricks bundle run --target "$TARGET_ENV" "$app"
+  echo "App $app started successfully."
+done
+
+echo "All apps in the bundle have been started successfully."

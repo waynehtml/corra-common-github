@@ -1,0 +1,16 @@
+{
+  "id": "file-flatten-basic",
+  "handler": "oedis.handler.file.flatten",
+  "params": {
+    "requests": [
+      {
+        "src_dir": "staged",
+        "include": ["daily_report.csv"],
+        "exclude": ["*.txt"],
+        "dst_dir": "archive",
+        "operation": "move",
+        "on_collision": "error"
+      }
+    ]
+  }
+}

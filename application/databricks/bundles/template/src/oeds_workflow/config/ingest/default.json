@@ -1,0 +1,35 @@
+{
+  "pipeline": "oeds-sample",
+  "tasks": [
+    {
+      "id": "download",
+      "handler": "oedis.handler.storage.download",
+      "params": {
+        "connection": {
+          "uri": "/Volumes/[[env]]_application_cat/oedisint_db/land-oedataservices/dis/template/data/source/"
+        },
+        "requests": [
+          {
+            "src_dir": "raw",
+            "include": ["*.csv"],
+            "recursive": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "upload",
+      "handler": "oedis.handler.storage.upload",
+      "params": {
+        "connection": {
+          "uri": "[[land_dir]]"
+        },
+        "requests": [
+          {
+            "recursive": true
+          }
+        ]
+      }
+    }
+  ]
+}

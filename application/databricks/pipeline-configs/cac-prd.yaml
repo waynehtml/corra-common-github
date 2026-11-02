@@ -1,0 +1,12 @@
+variables:
+  - name: dbx_prd_workspace_url
+    value: https://adb-642333651898149.9.azuredatabricks.net/
+  - name: dbx_prd_project_path
+    value: databricks_notebooks
+  - name: dbx_prd_destination_path
+    value: /oedataservices
+  - name: dbx_prd_repo_notebook_location
+    value: application/databricks
+  - name: dbx_prd_service_connection
+    value: lake-dscn-bocad01
+

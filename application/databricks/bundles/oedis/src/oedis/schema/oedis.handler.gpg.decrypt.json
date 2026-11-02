@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oedis/schema/oedis.handler.gpg.decrypt.json",
+  "title": "Task params for oedis.handler.gpg.decrypt",
+  "description": "Configuration for decrypting OpenPGP-encrypted files from the task inbox using the gpg handler.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "credential",
+    "requests"
+  ],
+  "properties": {
+    "credential": {
+      "type": "object",
+      "description": "Task-level OpenPGP private key credentials.",
+      "additionalProperties": false,
+      "required": [
+        "private_key"
+      ],
+      "properties": {
+        "private_key": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Base64-encoded private key. For the GnuPG backend, this should be base64 of the ASCII-armored private key text."
+        },
+        "passphrase": {
+          "type": "string",
+          "description": "Optional passphrase used to unlock a protected private key."
+        }
+      }
+    },
+    "requests": {
+      "type": "array",
+      "description": "List of decryption instructions. Each item describes which encrypted inbox files to match and where plaintext files should be written.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "src_dir": {
+            "type": "string",
+            "description": "Inbox-relative source directory to read from. Empty or omitted means ctx.inbox. Leading / is treated as inbox-rooted shorthand and the resolved path must stay inside ctx.inbox."
+          },
+          "include": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "description": "Encrypted file match pattern or list of patterns to include. Examples: '*.gpg' or ['*.gpg', '*.pgp']. When recursive is true, relative paths under src_dir can also match.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exclude": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "description": "Encrypted file match pattern or list of patterns to exclude after include matching. When recursive is true, relative paths under src_dir can also match.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "recursive": {
+            "type": "boolean",
+            "description": "When true, walk subdirectories under src_dir. When false, only files directly under src_dir are considered."
+          },
+          "dst_dir": {
+            "type": "string",
+            "description": "Inbox-relative destination directory for plaintext files. Empty or omitted keeps the handler's default behavior of writing plaintext beside each source file. Leading / is treated as inbox-rooted shorthand and the resolved path must stay inside ctx.inbox."
+          },
+          "delete_source_file": {
+            "type": "boolean",
+            "description": "When true, delete each encrypted source file after it is decrypted successfully."
+          }
+        }
+      }
+    }
+  }
+}

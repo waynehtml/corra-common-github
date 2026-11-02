@@ -1,0 +1,21 @@
+{
+  "id": "upload_with_overwrite",
+  "handler": "oedis.handler.database.upload",
+  "params": {
+    "requests": [
+      {
+        "id": "customer_snapshot",
+        "table": "main.corra_db.tbl_customer_snapshot",
+        "file": "customer_snapshot.parquet",
+        "format": "parquet",
+        "select_sql": "SELECT customer_id, customer_name, current_timestamp() AS snapshot_ts FROM {source}",
+        "write": {
+          "mode": "overwrite",
+          "options": {
+            "overwriteSchema": "true"
+          }
+        }
+      }
+    ]
+  }
+}

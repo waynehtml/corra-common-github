@@ -1,0 +1,13 @@
+variables:
+  - name: dbx_stg_workspace_url
+    value: https://adb-13344226264609.9.azuredatabricks.net
+  - name: dbx_stg_project_path
+    value: databricks_notebooks
+  - name: dbx_stg_destination_path
+    value: /oedataservices
+  - name: dbx_stg_repo_notebook_location
+    value: application/databricks
+  - name: dbx_stg_service_connection
+    value: lake-dscn-bocad01
+
+

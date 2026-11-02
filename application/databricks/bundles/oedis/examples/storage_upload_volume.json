@@ -1,0 +1,19 @@
+{
+  "id": "upload",
+  "handler": "oedis.handler.storage.upload",
+  "params": {
+    "connection": {
+      "uri": "/Volumes/my_catalog/my_schema/my_volume"
+    },
+    "requests": [
+      {
+        "src_dir": "download",
+        "include": [
+          "**/*.csv"
+        ],
+        "recursive": true,
+        "dst_dir": "inbox"
+      }
+    ]
+  }
+}

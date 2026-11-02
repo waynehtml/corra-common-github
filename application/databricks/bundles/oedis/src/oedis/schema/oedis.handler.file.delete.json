@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oedis/schema/oedis.handler.file.delete.json",
+  "title": "Task params for oedis.handler.file.delete",
+  "description": "Configuration for deleting files or directories inside the task inbox using the file handler.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "requests"
+  ],
+  "properties": {
+    "requests": {
+      "type": "array",
+      "description": "List of delete instructions. Each item describes which inbox files or directories to match and remove.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "src_dir": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Source directory to read from. If omitted, files are read from ctx.inbox. Relative paths are resolved from ctx.inbox and must stay inside it."
+          },
+          "include": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "description": "File or directory match pattern or list of patterns to include. Matching is always against the candidate path relative to src_dir. It does not do separate basename matching.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exclude": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "description": "File or directory match pattern or list of patterns to exclude after include matching. Matching is always against the candidate path relative to src_dir.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "recursive": {
+            "type": "boolean",
+            "description": "When true, walk subdirectories under src_dir. When false, only files and directories directly under src_dir are considered."
+          }
+        },
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "dst_dir"
+              ]
+            },
+            {
+              "required": [
+                "dst_name"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}

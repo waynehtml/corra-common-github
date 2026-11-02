@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oedis/schema/oedis.handler.database.upload.json",
+  "title": "Task params for oedis.handler.database.upload",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "requests"
+  ],
+  "properties": {
+    "requests": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/databaseUploadRequest"
+      }
+    }
+  },
+  "$defs": {
+    "databaseUploadRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "table"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "table": {
+          "type": "string",
+          "minLength": 1
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Source file path under ctx.inbox. Leading / is treated as inbox-rooted shorthand and the resolved path must stay inside ctx.inbox."
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "csv",
+            "parquet"
+          ]
+        },
+        "read": {
+          "$ref": "#/$defs/databaseUploadRead"
+        },
+        "select_sql": {
+          "type": "string",
+          "minLength": 1
+        },
+        "create_sql": {
+          "type": "string",
+          "minLength": 1
+        },
+        "write": {
+          "$ref": "#/$defs/databaseUploadWrite"
+        }
+      }
+    },
+    "databaseUploadRead": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "options": {
+          "$ref": "#/$defs/options"
+        }
+      }
+    },
+    "databaseUploadWrite": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "options": {
+          "$ref": "#/$defs/options"
+        }
+      }
+    },
+    "options": {
+      "type": "object",
+      "additionalProperties": {
+        "type": [
+          "string",
+          "number",
+          "integer",
+          "boolean"
+        ]
+      }
+    }
+  }
+}

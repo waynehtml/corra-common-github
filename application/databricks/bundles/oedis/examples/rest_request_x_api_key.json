@@ -1,0 +1,39 @@
+{
+  "id": "request",
+  "handler": "oedis.handler.rest.request",
+  "params": {
+    "connection": {
+      "timeout_sec": 60,
+      "headers": {
+        "Accept": "application/json"
+      },
+      "auth": {
+        "type": "api_key",
+        "name": "x-api-key",
+        "value": "{{ keyvault(scope=\"dis-secrets\", key=\"api_key\") }}"
+      },
+      "fault_tolerant": {
+        "retries": 3,
+        "retry_interval_sec": 30,
+        "retry_on_status": [
+          429,
+          500,
+          502,
+          503,
+          504
+        ]
+      }
+    },
+    "requests": [
+      {
+        "id": "get_series",
+        "method": "GET",
+        "url": "https://example/api/series",
+        "params": {
+          "vectorId": "{{ param(name=\"vectorId\") }}"
+        },
+        "file": "raw/series_{{ rundate }}.json"
+      }
+    ]
+  }
+}

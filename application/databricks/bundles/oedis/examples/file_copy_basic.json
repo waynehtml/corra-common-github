@@ -1,0 +1,14 @@
+{
+  "id": "file-copy-basic",
+  "handler": "oedis.handler.file.copy",
+  "params": {
+    "requests": [
+      {
+        "src_dir": "staged",
+        "include": ["**/*"],
+        "recursive": true,
+        "dst_dir": "archive"
+      }
+    ]
+  }
+}

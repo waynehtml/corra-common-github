@@ -1,0 +1,24 @@
+{
+  "id": "request",
+  "handler": "oedis.handler.rest.request",
+  "params": {
+    "connection": {
+      "timeout_sec": 60,
+      "headers": {
+        "Accept": "application/json"
+      },
+      "auth": {
+        "type": "bearer",
+        "token": "{{ keyvault(scope=\"dis-secrets\", key=\"token_value\") }}"
+      }
+    },
+    "requests": [
+      {
+        "id": "get_data",
+        "method": "GET",
+        "url": "https://example/api/data",
+        "file": "raw/data_{{ rundate }}.json"
+      }
+    ]
+  }
+}

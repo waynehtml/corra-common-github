@@ -1,0 +1,170 @@
+# This is a Databricks asset bundle definition for common.
+# See https://docs.databricks.com/dev-tools/bundles/index.html for documentation.
+bundle:
+  name: oedmz
+
+workspace:
+  # Put all bundle-managed content under the project folder
+  root_path: /Workspace/oedataservices/.bundle/${bundle.name}
+
+sync:
+  paths:
+    - .
+    - ../../
+
+variables:
+  cluster_policy_id:
+    default: ""
+  cluster_id:
+    default: ""
+  job_runas_account:
+    default: ""
+  job_alert_email:
+    default: []
+  debug:
+    default: true
+  temp_dir:
+    default: "/tmp/oedis"
+  land_dir:
+    default: "/Volumes/${bundle.target}_dmz_application_cat/oedisext_db/land-oedataservices/oedis"
+  config_dir:
+    default: "/Volumes/${bundle.target}_dmz_application_cat/oedisext_db/config-oedataservices/oedis"
+  nexus_url:
+    default: "https://fcp4lnexuap01.bocad.bank-banque-canada.ca/nexus/repository/pypi-all/simple"
+
+resources:
+  jobs:
+    OEDS_DIS_JOB:
+      name: OEDS-DIS-JOB
+      description: OEDS Data Ingestion Services
+
+      run_as:
+        # Run as triton service account
+        service_principal_name: ${var.job_runas_account}
+
+      # Job queue
+      queue:
+        enabled: true
+      max_concurrent_runs: 10
+
+      parameters:
+        - name: env
+          default: ${bundle.target}
+        - name: config
+          default: ""
+        - name: rundate
+          default: ""
+        - name: params
+          default: ""
+        - name: zip
+          default: "false"
+        - name: debug
+          default: ${var.debug}
+
+      email_notifications:
+        on_failure: ${var.job_alert_email}
+
+      tags:
+        App: OEDS_DIS
+
+      tasks:
+        - task_key: main
+          existing_cluster_id: ${var.cluster_id}
+          notebook_task:
+            notebook_path: ../../src/main.py
+            base_parameters:
+              timezone: "America/New_York"
+              temp_dir: "${var.temp_dir}"
+              land_dir: "${var.land_dir}"
+              config_dir: "${var.config_dir}"
+              nexus_url: "${var.nexus_url}"
+              job_name: "{{job.name}}"
+              job_id: "{{job.id}}"
+              job_run_id: "{{job.run_id}}"
+              job_trigger_type: "{{job.trigger.type}}"
+              workspace_url: "{{workspace.url}}"
+
+    OEDS_DIS_WARMUP:
+      name: OEDS_DIS_WARMUP
+      description: Warm up OEDIS cluster
+      # Run as triton service account
+      run_as:
+        service_principal_name: ${var.job_runas_account}
+      # Schedule
+      schedule:
+        quartz_cron_expression: 0 0/15 4-23 ? * MON-FRI
+        timezone_id: America/New_York
+        pause_status: UNPAUSED
+      # Disable queue
+      queue:
+        enabled: false
+      max_concurrent_runs: 1
+      # Notification
+      email_notifications:
+        on_failure: ${var.job_alert_email}
+      tags:
+        App: OEDS_DIS
+      # Job tasks
+      tasks:
+        - task_key: main
+          existing_cluster_id: ${var.cluster_id}
+          notebook_task:
+            notebook_path: ../../src/warmup.py
+            base_parameters:
+              timezone: "America/New_York"
+              job_name: "{{job.name}}"
+              job_id: "{{job.id}}"
+              run_id: "{{job.run_id}}"
+              workspace_url: "{{workspace.url}}"
+
+targets:
+  dev:
+    default: true
+    workspace:
+      host: https://adb-7405611352003885.5.azuredatabricks.net
+    variables:
+      # cluster_policy_id: "00036D9F32BEB29D"
+      cluster_id: "0415-134548-0t5rkksq"
+      # lake-dev-oedisint
+      job_runas_account: "ec1ede6d-b2e2-4ec9-8db6-76dbf1410ec9"
+      job_alert_email:
+        - dda-support-dev@bank-banque-canada.ca
+
+    resources:
+      jobs:
+        OEDS_DIS_JOB:
+          permissions:
+            # AE engineers
+            - group_name: "lake_aeengsupport_rusr_inda"
+              level: CAN_MANAGE
+            # lake-dev-oedataservices-services
+            - service_principal_name: "2b501945-5940-4527-9cdd-51a07b77ceb7"
+              level: CAN_MANAGE_RUN
+            # lake-dev_triton-services
+            - service_principal_name: "bcb4909e-06b7-411a-97bd-366fe459b759"
+              level: CAN_MANAGE_RUN
+            # lake-dev-currency-services
+            - service_principal_name: "b1d31712-0160-4825-ac5c-ec70e15ad0fd"
+              level: CAN_MANAGE_RUN
+            # lake-dev-paycan-services
+            - service_principal_name: "07b85d8e-700b-4706-84ea-afa60a3ffedd"
+              level: CAN_MANAGE_RUN
+              
+        OEDS_DIS_WARMUP:
+          permissions:
+            # AE engineers
+            - group_name: "lake_aeengsupport_rusr_inda"
+              level: CAN_MANAGE
+  stg:
+    mode: production
+    workspace:
+      host: https://adb-13344226264609.9.azuredatabricks.net
+    variables:
+      debug: true
+
+  prd:
+    mode: production
+    workspace:
+      host: https://adb-642333651898149.9.azuredatabricks.net
+    variables:
+      debug: false

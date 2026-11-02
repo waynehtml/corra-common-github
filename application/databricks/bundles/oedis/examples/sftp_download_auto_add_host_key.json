@@ -1,0 +1,34 @@
+{
+  "id": "download",
+  "handler": "oedis.handler.sftp.download",
+  "params": {
+    "connection": {
+      "hostname": "sftp.partner.example.com",
+      "root_dir": "/outgoing",
+      "disabled_algorithms": {
+        "pubkeys": [
+          "rsa-sha2-512",
+          "rsa-sha2-256"
+        ]
+      },
+      "host_verification": {
+        "mode": "allow_auto_add_host_key"
+      },
+      "auth": {
+        "type": "key",
+        "username": "svc_ingest",
+        "private_key": "{{keyvault(scope=dis-secrets, key=sftp-private-key)}}",
+        "password": "{{keyvault(scope=dis-secrets, key=sftp-password)}}"
+      }
+    },
+    "requests": [
+      {
+        "src_dir": "text",
+        "include": [
+          "*.csv"
+        ],
+        "recursive": true
+      }
+    ]
+  }
+}

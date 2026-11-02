@@ -1,0 +1,26 @@
+{
+  "id": "download",
+  "handler": "oedis.handler.sharepoint.download",
+  "params": {
+    "connection": {
+      "site": "https://contoso.sharepoint.com/sites/Finance",
+      "drive": "Documents",
+      "auth": {
+        "tenant_id": "[[ tenant_id ]]",
+        "client_id": "{{ keyvault(scope='dis-secrets', key='sp_client_id') }}",
+        "client_secret": "{{ keyvault(scope='dis-secrets', key='sp_client_secret') }}"
+      }
+    },
+    "requests": [
+      {
+        "src_dir": "CORRA",
+        "dst_dir": "sharepoint/corra",
+        "recursive": true,
+        "include": ["**/*.csv"],
+        "exclude": ["*_tmp.csv", "**/~$*"],
+        "updated_after": "2026-02-01T00:00:00Z",
+        "updated_before": "2026-02-02T00:00:00Z"
+      }
+    ]
+  }
+}

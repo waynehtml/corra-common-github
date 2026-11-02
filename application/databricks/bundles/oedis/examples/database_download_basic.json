@@ -1,0 +1,33 @@
+{
+  "id": "download",
+  "handler": "oedis.handler.database.download",
+  "params": {
+    "requests": [
+      {
+        "id": "corra_daily_rates",
+        "table": "main.corra_db.tbl_corra_rate_history",
+        "format": "csv",
+        "file": "corra_daily_rates_export.csv",
+        "write": {
+          "options": {
+            "header": "true",
+            "delimiter": "|",
+            "encoding": "utf-8",
+            "nullValue": "",
+            "emptyValue": ""
+          }
+        }
+      },
+      {
+        "id": "corra_daily_rates_parquet",
+        "select_sql": "SELECT * FROM main.corra_db.tbl_corra_rate_history WHERE business_date = DATE('{{ delta(format='YYYY-MM-DD') }}')",
+        "format": "parquet",
+        "write": {
+          "options": {
+            "compression": "snappy"
+          }
+        }
+      }
+    ]
+  }
+}

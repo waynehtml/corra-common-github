@@ -1,0 +1,90 @@
+{
+  "pipeline": "corra",
+  "tasks": [
+    {
+      "id": "download",
+      "handler": "oedis.handler.sftp.download",
+      "params": {
+        "connection": {
+          "hostname": "129.153.60.96",
+          "port": 22,
+          "auth": {
+            "type": "basic",
+            "username": "{{ keyvault(scope=\"duwekeyvault01-scope\", key=\"test-ssh-user\") }}",
+            "password": "{{ keyvault(scope=\"duwekeyvault01-scope\", key=\"test-ssh-password\") }}"
+          },
+          "max_connections": 4,
+          "root_dir": "inbox",
+          "keepalive_sec": 30,
+          "fault_tolerant": {
+            "retries": 3,
+            "retry_interval_sec": 30
+          }
+        },
+        "requests": [
+          {
+            "src_dir": "7z",
+            "include": "industry.csv.gpg.7z",
+            "exclude": [
+              "*.csv"
+            ],
+            "recursive": false,
+            "delete_source_file": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "extract",
+      "handler": "oedis.handler.archive.extract",
+      "active": false,
+      "params": {
+        "requests": [
+          {
+            "src_dir": "",
+            "include": "industry.csv.gpg.7z",
+            "dst_dir": "",
+            "format": "auto",
+            "passphrase": "",
+            "delete_source_file": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "decrypt",
+      "handler": "oedis.handler.gpg.decrypt",
+      "active": false,
+      "params": {
+        "pkey": "{{ keyvault(scope=\"duwekeyvault01-scope\", key=\"test-gpg-key\") }}",
+        "passphrase": "{{ keyvault(scope=\"duwekeyvault01-scope\", key=\"test-gpg-password\") }}",
+        "requests": [
+          {
+            "src_dir": "",
+            "src_pattern": "industry.csv.gpg",
+            "delete_source_file": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "upload",
+      "handler": "oedis.handler.adls.upload",
+      "params": {
+        "storage": "duweland01",
+        "container": "avscan",
+        "dest_prefix": "data",
+        "preserve_structure": true,
+        "requests": [
+          {
+            "src_dir": "",
+            "src_pattern": "*",
+            "recursive": false,
+            "exclude": "*.gpg1"
+          }
+        ]
+      }
+    }
+  ]
+}
+

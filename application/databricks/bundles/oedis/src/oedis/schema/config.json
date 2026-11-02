@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oedis/schema/config.json",
+  "title": "OEDIS Pipeline Config (top-level only)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "pipeline",
+    "tasks"
+  ],
+  "properties": {
+    "pipeline": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "handler",
+          "params"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "handler": {
+            "type": "string",
+            "minLength": 1
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "optional": {
+            "type": "boolean"
+          },
+          "when": {
+            "type": "string",
+            "enum": [
+              "on_success",
+              "on_failure",
+              "on_complete"
+            ]
+          },
+          "params": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}

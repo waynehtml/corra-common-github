@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oedis/schema/oedis.handler.sharepoint.download.json",
+  "title": "Task params for oedis.handler.sharepoint.download",
+  "description": "Configuration for downloading files from a SharePoint document library into the task inbox.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "connection",
+    "requests"
+  ],
+  "properties": {
+    "connection": {
+      "type": "object",
+      "description": "SharePoint and Microsoft Graph connection settings used to resolve the site, drive, and access token.",
+      "additionalProperties": false,
+      "required": [
+        "site",
+        "drive",
+        "auth"
+      ],
+      "properties": {
+        "site": {
+          "type": "string",
+          "minLength": 1,
+          "description": "SharePoint site URL, for example https://contoso.sharepoint.com/sites/Finance."
+        },
+        "drive": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Drive or document library name inside the SharePoint site."
+        },
+        "auth": {
+          "type": "object",
+          "description": "Microsoft Graph app-only credentials used to request an access token.",
+          "additionalProperties": false,
+          "required": [
+            "tenant_id",
+            "client_id",
+            "client_secret"
+          ],
+          "properties": {
+            "tenant_id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Microsoft Entra tenant ID used to request the Graph access token."
+            },
+            "client_id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Application client ID used for SharePoint access."
+            },
+            "client_secret": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Application client secret used for SharePoint access."
+            }
+          }
+        },
+        "timeout_sec": {
+          "type": "number",
+          "description": "Optional request timeout in seconds for Microsoft Graph API calls."
+        }
+      }
+    },
+    "requests": {
+      "type": "array",
+      "description": "List of SharePoint download instructions. Each item describes one remote source selection under the configured drive and how matched files should be copied into the inbox.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "description": "One SharePoint download request.",
+        "additionalProperties": false,
+        "properties": {
+          "src_dir": {
+            "type": "string",
+            "description": "Remote source directory relative to the selected SharePoint drive. Leave empty or omit it to discover files directly from the drive root. Absolute paths are rejected."
+          },
+          "dst_dir": {
+            "type": "string",
+            "description": "Destination directory under ctx.inbox. Leave empty or omit it to copy directly into ctx.inbox. Must be a relative local path when provided."
+          },
+          "recursive": {
+            "type": "boolean",
+            "description": "When true, walk subdirectories under src_dir. When false, only files directly under src_dir are considered."
+          },
+          "include": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "description": "File match pattern or list of patterns to include. Matching is attempted against the path relative to src_dir. File-name-only patterns such as '*.csv' still work because they are evaluated against that relative path. Prefer recursive=true with patterns like '*.csv' instead of '**/*.csv'.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exclude": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "description": "File match pattern or list of patterns to exclude after include matching. Matching is attempted against the path relative to src_dir.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "updated_after": {
+            "type": "string",
+            "description": "Optional lower bound for lastModifiedDateTime. Accepts the datetime string formats supported by the handler."
+          },
+          "updated_before": {
+            "type": "string",
+            "description": "Optional exclusive upper bound for lastModifiedDateTime. Accepts the datetime string formats supported by the handler."
+          }
+        }
+      }
+    }
+  }
+}

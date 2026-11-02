@@ -1,0 +1,30 @@
+{
+  "pipeline": "email_send_graph",
+  "tasks": [
+    {
+      "id": "send_email",
+      "handler": "oedis.handler.email.send",
+      "params": {
+        "connection": {
+          "auth": {
+            "tenant_id": "{{keyvault(scope='lake-kv-oedataservices-scope', key='app-3fc6e6c5-eaa5-4948-ba9a-d3ceebf437db-tenantid')}}",
+            "client_id": "{{keyvault(scope='lake-kv-oedataservices-scope', key='app-3fc6e6c5-eaa5-4948-ba9a-d3ceebf437db-appid')}}",
+            "client_secret": "{{keyvault(scope='lake-kv-oedataservices-scope', key='app-3fc6e6c5-eaa5-4948-ba9a-d3ceebf437db-secret')}}"
+          }
+        },
+        "message": {
+          "from": "ddasupport@bocqa.bank-banque-canada.ca",
+          "to": [
+            "waynehtml@gmail.com"
+          ],
+          "subject": "DIS job summary - << runtime.job_run_id >>",
+          "body": {
+            "format": "html",
+            "content": "test"
+          }
+        },
+        "max_total_attachment_bytes": 10485760
+      }
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oedis/schema/oedis.handler.archive.compress.json",
+  "title": "Task params for oedis.handler.archive.compress",
+  "description": "Configuration for compressing inbox files into archive files with the archive handler.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "credential": {
+      "type": "object",
+      "description": "Optional task-level archive credentials. The passphrase is used when a file entry does not provide its own passphrase.",
+      "additionalProperties": false,
+      "properties": {
+        "passphrase": {
+          "type": "string",
+          "description": "Optional passphrase used for encrypted zip or 7z output archives."
+        }
+      }
+    },
+    "requests": {
+      "type": "array",
+      "description": "List of archive creation instructions. Each item describes which inbox files to match and how the output archive should be written.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "src_dir": {
+            "type": "string",
+            "description": "Inbox-relative source directory to read from. Empty or omitted means ctx.inbox. Leading / is treated as inbox-rooted shorthand, and the resolved path must stay inside ctx.inbox."
+          },
+          "include": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "description": "File match pattern or list of patterns to include. Examples: '*.csv' or ['*.csv', '*.json']. When recursive is true, relative paths under src_dir can also match.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exclude": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "description": "File match pattern or list of patterns to exclude after include matching. When recursive is true, relative paths under src_dir can also match.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "format": {
+            "type": "string",
+            "description": "Archive format to write. Use auto to write a zip archive; otherwise supported values are zip, tar, gztar, tgz, and 7z.",
+            "enum": [
+              "auto",
+              "zip",
+              "tar",
+              "gztar",
+              "tgz",
+              "7z"
+            ]
+          },
+          "recursive": {
+            "type": "boolean",
+            "description": "When true, walk subdirectories under src_dir. When false, only files directly under src_dir are considered."
+          },
+          "delete_source_file": {
+            "type": "boolean",
+            "description": "When true, delete each matched source file after the archive is written successfully."
+          },
+          "dst_dir": {
+            "type": "string",
+            "description": "Inbox-relative destination directory for the output archive. Empty or omitted keeps the handler's default behavior of writing the archive under src_dir. Leading / is treated as inbox-rooted shorthand, and the resolved path must stay inside ctx.inbox."
+          },
+          "passphrase": {
+            "type": "string",
+            "description": "Optional file-level passphrase. When provided, it overrides credential.passphrase for this archive output."
+          }
+        }
+      }
+    }
+  }
+}

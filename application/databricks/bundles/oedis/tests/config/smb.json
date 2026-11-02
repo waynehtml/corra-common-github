@@ -1,0 +1,37 @@
+{
+  "pipeline": "smb_to_volume",
+  "tasks": [
+    {
+      "id": "download",
+      "handler": "oedis.handler.smb.download",
+      "params": {
+        "connection": {
+          "unc": "\\\\svmip-fsaas-01.bocad.bank-banque-canada.ca\\home\\asd\\datastg\\isdata\\csep\\ais\\isSource\\CSA\\LANDING",
+          "auth": {
+            "username": "bocad\\crdp_dscurr_oppl_s",
+            "password": "{{keyvault(scope='lake-kv-currency-scope', key='crdp-dscurr-oppl-s-pass')}}"
+          }
+        },
+        "requests": [
+          {
+            "include": ["Media_Report_2025-10-15.xml"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "upload",
+      "handler": "oedis.handler.storage.upload",
+      "params": {
+        "connection": {
+          "uri": "/Volumes/dev_application_cat/oedisint_db/land-oedataservices/dis/smb/"
+        },
+        "requests": [
+          {
+            "recursive": true
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "id": "download",
+  "handler": "oedis.handler.sftp.download",
+  "params": {
+    "connection": {
+      "hostname": "files.vendor.internal",
+      "disabled_algorithms": {
+        "pubkeys": [
+          "rsa-sha2-512",
+          "rsa-sha2-256"
+        ]
+      },
+      "port": 2222,
+      "root_dir": "/daily",
+      "auth": {
+        "type": "key",
+        "username": "svc_ingest",
+        "private_key": "{{keyvault(scope=dis-secrets, key=sftp-private-key)}}",
+        "private_key_passphrase": "{{keyvault(scope=dis-secrets, key=sftp-passphrase)}}",
+        "password": "{{keyvault(scope=dis-secrets, key=sftp-password)}}"
+      },
+      "host_verification": {
+        "mode": "known_hosts",
+        "known_hosts": [
+          "sftp.archive.example.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIC...",
+          "[sftp.archive.example.com]:2222 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTIt..."
+        ]
+      }
+    },
+    "requests": [
+      {
+        "src_dir": "drop",
+        "include": [
+          "*.csv"
+        ],
+        "recursive": true,
+        "delete_source_file": true
+      }
+    ]
+  }
+}

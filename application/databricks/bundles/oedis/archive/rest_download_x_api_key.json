@@ -1,0 +1,29 @@
+{
+  "id": "download",
+  "handler": "oedis.handler.rest.download",
+  "params": {
+    "connection": {
+      "timeout_sec": 60,
+      "headers": {
+        "Accept": "application/json",
+        "x-api-key": "{{ keyvault(scope=\"dis-secrets\", key=\"api_key\") }}"
+      },
+      "fault_tolerant": {
+        "retries": 3,
+        "retry_interval_sec": 30,
+        "retry_on_status": [429, 500, 502, 503, 504]
+      }
+    },
+    "requests": [
+      {
+        "id": "get_series",
+        "method": "GET",
+        "url": "https://example/api/series",
+        "query": {
+          "vectorId": "{{ param(name=\"vectorId\") }}"
+        },
+        "file": "raw/series_{{ rundate }}.json"
+      }
+    ]
+  }
+}

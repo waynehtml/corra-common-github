@@ -1,0 +1,30 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "actions": {
+      "Call_workflow_in_this_logic_app": {
+        "type": "Workflow",
+        "inputs": {
+          "host": {
+            "workflow": {
+              "id": "oeds_everbrige_forwarder"
+            }
+          }
+        },
+        "runAfter": {}
+      }
+    },
+    "outputs": {},
+    "triggers": {
+      "Recurrence": {
+        "type": "Recurrence",
+        "recurrence": {
+          "interval": 3,
+          "frequency": "Minute"
+        }
+      }
+    }
+  },
+  "kind": "Stateful"
+}

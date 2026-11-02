@@ -1,0 +1,14 @@
+{
+  "id": "file-delete-recursive-pattern",
+  "handler": "oedis.handler.file.delete",
+  "params": {
+    "requests": [
+      {
+        "src_dir": "archive",
+        "include": ["**/*.tmp", "**/*.bak"],
+        "exclude": ["**/.keep"],
+        "recursive": true
+      }
+    ]
+  }
+}

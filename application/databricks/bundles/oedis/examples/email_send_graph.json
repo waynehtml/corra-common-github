@@ -1,0 +1,45 @@
+{
+  "pipeline": "email_send_graph",
+  "tasks": [
+    {
+      "id": "send_email",
+      "handler": "oedis.handler.email.send",
+      "when": "on_complete",
+      "params": {
+        "connection": {
+          "auth": {
+            "tenant_id": "<tenant-id>",
+            "client_id": "<client-id>",
+            "client_secret": "<client-secret>"
+          }
+        },
+        "message": {
+          "from": "dis@yourorg.com",
+          "to": [
+            "team@yourorg.com"
+          ],
+          "subject": "DIS job summary - << runtime.job_run_id >>",
+          "body": {
+            "format": "html",
+            "template": "email_send_graph.html"
+          },
+          "attachments": [
+            {
+              "src_dir": "download",
+              "include": [
+                "*.csv",
+                "*.xlsx"
+              ]
+            },
+            {
+              "src_dir": "upload",
+              "include": "**/*.json",
+              "recursive": true
+            }
+          ]
+        },
+        "max_total_attachment_bytes": 10485760
+      }
+    }
+  ]
+}

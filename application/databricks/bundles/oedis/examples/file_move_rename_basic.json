@@ -1,0 +1,15 @@
+{
+  "id": "file-move-rename-basic",
+  "handler": "oedis.handler.file.move",
+  "params": {
+    "requests": [
+      {
+        "src_dir": "staged",
+        "include": ["daily_report.csv"],
+        "recursive": false,
+        "dst_dir": "archive",
+        "dst_name": "daily_report_latest.csv"
+      }
+    ]
+  }
+}

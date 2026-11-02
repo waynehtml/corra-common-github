@@ -1,0 +1,81 @@
+# --------------------------------------------------------------------------------------------------------------------
+# To migrate this pipeline to another Databricks asset bundle, in the variables section, update:
+# 1. dev-host: update this to your dev Databricks workspace URL.
+# 2. stg-host: update this to your stg Databricks workspace URL.
+# 3. prd-host: update this to your prd Databricks workspace URL.
+# 4. pool_name: use the appropriate agent pool for the new asset bundle.
+# 5. agent_name: update this to the specific agent name.
+# 6. azure_resource_id: Databricks resource ID for Azure authentication.
+# 7. sc_dev: update this to your dev service connection.
+# 8. sc_stg: update this to your stg service connection.
+# 9. sc_prd: update this to your prd service connection.
+# --------------------------------------------------------------------------------------------------------------------
+
+trigger: none # DO NOT CHANGE
+
+# Variables that you need to change as per your project
+variables:  
+  # Databricks workspace URL variable map based on target_env parameter
+  dev-host: 'https://adb-1700301391505163.3.azuredatabricks.net'
+  stg-host: 'https://adb-13344226264609.9.azuredatabricks.net'
+  prd-host: 'https://adb-642333651898149.9.azuredatabricks.net'
+  
+  # Name of pool you want to use
+  pool_name: 'dops-prdagntpl01'
+  
+  # Azure Resource ID for Databricks authentication
+  azure_resource_id: '2ff814a6-3304-4ab8-85cb-cd0e6f879c1d'
+  
+  # Service connection variable map based on target_env
+  sc_dev: lake-dscn-bocqa01
+  sc_stg: lake-dscn-bocad01
+  sc_prd: lake-dscn-bocad01
+
+# Input parameters for selecting environment
+parameters:
+  - name: bundle_path
+    displayName: Bundle Path
+    type: string
+    default: application/databricks/bundles/
+
+  - name: target_env
+    displayName: Target Environment
+    type: string
+    default: dev
+    values:
+      - dev
+      - stg
+      - prd
+
+  - name: agent_name
+    displayName: Agent Name
+    type: string
+    default: fcp9ldopsam01
+    values:
+      - fcp9ldopsam01  
+      - fcp9ldopsam02
+
+  - name: debug
+    displayName: Enable Databricks CLI debug
+    type: boolean
+    default: false
+
+resources:
+  repositories:
+    - repository: lake-devops                     # Reference shared DevOps repo
+      name: lake-devops/lake-devops
+      type: git
+      ref: refs/heads/main
+
+# Reuse the shared dbk-dab-deploy-template from lake-devops
+stages:
+  - template: pipelines/databricks/dbk-dab-deploy-template-env.yaml@lake-devops
+    parameters:
+      debug: ${{ parameters.debug }} # Pass the debug parameter
+      target_env: ${{ parameters.target_env }} # Pass the target environment parameter
+      dbk_host: ${{ variables[format('{0}-host', parameters.target_env)] }} # Get Databricks host from variable map
+      bundle_path: ${{ parameters.bundle_path }} # Referencing the bundle_path variable created above
+      pool_name: ${{ variables.pool_name }} # Get the pool_name from the variable created above
+      agent_name: ${{ parameters.agent_name }} # Get the agent_name from the variable created above
+      service_connection: ${{ variables[format('sc_{0}', parameters.target_env)] }} # Dynamically lookup service connection based on target_env
+      azure_resource_id: ${{ variables.azure_resource_id }} # Pass Azure Resource ID for authentication

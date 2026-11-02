@@ -1,0 +1,14 @@
+{
+  "name": "sample-config",
+  "version": 1,
+  "enabled": true,
+  "tags": [
+    "workspace",
+    "json",
+    "example"
+  ],
+  "owner": {
+    "team": "common",
+    "service": "utility"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "failure": {
+    "template": "template/failure.html",
+    "recipients": ["DM", "DDA"]
+  }
+}

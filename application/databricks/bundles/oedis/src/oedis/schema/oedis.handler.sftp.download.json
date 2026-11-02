@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oedis/schema/oedis.handler.sftp.download.json",
+  "title": "Task params for oedis.handler.sftp.download",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "connection",
+    "requests"
+  ],
+  "properties": {
+    "connection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hostname",
+        "auth"
+      ],
+      "properties": {
+        "hostname": {
+          "type": "string",
+          "minLength": 1
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "keepalive_sec": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_connections": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "root_dir": {
+          "type": "string",
+          "default": "",
+          "description": "Remote base directory for all requests. Empty or omitted means the connection's current/root remote directory."
+        },
+        "disabled_algorithms": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "auth": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "username"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "basic",
+                "key"
+              ]
+            },
+            "username": {
+              "type": "string",
+              "minLength": 1
+            },
+            "password": {
+              "type": "string"
+            },
+            "private_key": {
+              "type": "string",
+              "minLength": 1,
+              "description": "SFTP private key as a raw PEM string or a base64-encoded PEM string."
+            },
+            "private_key_passphrase": {
+              "type": "string"
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "type": {
+                    "const": "basic"
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "password"
+                ]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "type": {
+                    "const": "key"
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "private_key"
+                ]
+              }
+            }
+          ]
+        },
+        "host_verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "known_hosts",
+                "fingerprints",
+                "allow_auto_add_host_key"
+              ]
+            },
+            "known_hosts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "fingerprints": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "fault_tolerant": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "retries": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "retry_interval_sec": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    },
+    "requests": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "src_dir": {
+            "type": "string",
+            "default": "",
+            "pattern": "^(|[^/].*)$",
+            "description": "Remote source subdirectory under connection.root_dir. Empty or omitted means the connection.root_dir location itself; when both are empty, the connection's current/root remote directory is used."
+          },
+          "dst_dir": {
+            "type": "string",
+            "default": "",
+            "description": "Local destination subdirectory under ctx.inbox. Empty or omitted means files are written directly under ctx.inbox."
+          },
+          "include": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "description": "File match pattern or list of patterns to include. Matching is attempted against the file name and the discovered path relative to the current listing root. Prefer recursive=true with patterns like '*.csv' instead of '**/*.csv'.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exclude": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "description": "File match pattern or list of patterns to exclude after include matching. Matching is attempted against the file name and the discovered path relative to the current listing root.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "recursive": {
+            "type": "boolean",
+            "description": "When true, walk subdirectories under src_dir. When false, only files directly under src_dir are considered."
+          },
+          "updated_after": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional inclusive lower bound for SFTP file modified time. Must be an ISO 8601 datetime string with a timezone, for example 2026-04-01T00:00:00Z."
+          },
+          "updated_before": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional exclusive upper bound for SFTP file modified time. Must be an ISO 8601 datetime string with a timezone, for example 2026-04-01T00:00:00Z."
+          },
+          "delete_source_file": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}
