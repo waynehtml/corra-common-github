@@ -172,6 +172,23 @@ class TimeSeriesManager:
         self.FQN_DATASET = f"{CAT_MET}.{DB_META}.{TABLE_DATASET}"
         self.FQN_TRANS_LOG = f"{CAT_MET}.{DB_META}.{TABLE_TRANS_LOG}"
 
+        # Schema v2 changes:
+        # - time_series.time_series_name -> qualified_name: the qualified identifier
+        #   (for example, "corra#boc").
+        # - time_series.provider_name -> time_series_name: the source/provider series
+        #   name (for example, "corra"), consistent with curated data tables.
+        # - time_series_transaction_log.time_series_name -> object_name: the logged
+        #   value remains the qualified identifier.
+        # In v2, metadata time_series_name no longer contains the qualified identifier;
+        # metadata lookups and deletions must use qualified_name instead.
+        # Existing function inputs and returned dictionaries retain their v1 meanings.
+        # Observation-table columns and source-name values remain unchanged.
+        # Both metadata tables are assumed to migrate together. Detect the version
+        # once per instance and recreate the manager after a schema migration.
+        # Use the presence of "qualified_name" to select v2; its absence selects v1.
+        self._is_v2 = "qualified_name" in self.spark.table(self.FQN_METADATA).columns
+        logger.debug("Time series schema v%s detected for %s", 2 if self._is_v2 else 1, self.FQN_METADATA)
+
     def _get_timestamp_long(self, human_readable: bool = False) -> int:
 
         """
@@ -446,12 +463,23 @@ class TimeSeriesManager:
         if not time_series_name:
             raise ValueError("time_series_name is required.")
 
+        # Use qualified_name for v2 schema, otherwise use time_series_name
+        if self._is_v2:
+            name_column = "qualified_name"
+        else:
+            name_column = "time_series_name"
+
         query = f"""
             SELECT *
             FROM {self.FQN_METADATA}
-            WHERE time_series_name = '{time_series_name}'
+            WHERE {name_column} = '{time_series_name}'
         """
-        return ucutils.get_first_row_sql(query)
+        row = ucutils.get_first_row_sql(query)
+        # If the schema is v2, rename the columns to legacy names for consistency
+        if self._is_v2 and row:
+            row["provider_name"] = row["time_series_name"]
+            row["time_series_name"] = row.pop("qualified_name")
+        return row
     
     def delete_time_series(self, time_series_name: str):
         """
@@ -466,9 +494,15 @@ class TimeSeriesManager:
         # Get first so we can return what we deleted
         deleted = self.get_time_series(time_series_name)
         if deleted:
+            # Use qualified_name for v2 schema, otherwise use time_series_name
+            if self._is_v2:
+                name_column = "qualified_name"
+            else:
+                name_column = "time_series_name"
+
             query = f"""
                 DELETE FROM {self.FQN_METADATA}
-                WHERE time_series_name = '{time_series_name}'
+                WHERE {name_column} = '{time_series_name}'
             """
             self.spark.sql(query)
     
@@ -590,7 +624,14 @@ class TimeSeriesManager:
 
         # create a dataframe and upsert it into the data set table
         schema = ucutils.extract_table_schema(self.FQN_METADATA)
-        df = self.spark.createDataFrame([cols], schema)
+        # For v2 writes, translate legacy field names to the physical table columns.
+        if self._is_v2:
+            physical_cols = cols.copy()
+            physical_cols["qualified_name"] = physical_cols.pop("time_series_name")
+            physical_cols["time_series_name"] = physical_cols.pop("provider_name")
+        else:
+            physical_cols = cols
+        df = self.spark.createDataFrame([physical_cols], schema)
         ucutils.safe_write_to_delta(df, table_name=self.FQN_METADATA)
 
         # Get the data set skey from the database
@@ -618,9 +659,19 @@ class TimeSeriesManager:
         
         logger.debug(f"{miscutils.fn()}: Getting table-time series map for {time_series_names}")
 
+        # Use qualified_name for v2 schema, otherwise use time_series_name
+        if self._is_v2:
+            name_column = "qualified_name"
+        else:
+            name_column = "time_series_name"
+
+        # Keep the legacy alias and qualified values for filtering and returned groups.
         df = (
             self.spark.table(self.FQN_METADATA)
-            .select("destination_uc_table", "time_series_name")
+            .select(
+                "destination_uc_table",
+                F.col(name_column).alias("time_series_name"),
+            )
             .where(F.col("time_series_name").isin(time_series_names))
             .groupBy("destination_uc_table")
             .agg(F.collect_set("time_series_name").alias("time_series_names"))
@@ -691,8 +742,14 @@ class TimeSeriesManager:
         if audit_log_skey is None:
             raise ValueError("audit_log_skey must not be None.")
 
+        # Use object_name for v2 schema, otherwise use time_series_name
+        if self._is_v2:
+            name_column = "object_name"
+        else:
+            name_column = "time_series_name"
+
         # Build a Spark DF from the list
-        df = self.spark.createDataFrame([(x.strip(),) for x in time_series_names], ["time_series_name"])
+        df = self.spark.createDataFrame([(x.strip(),) for x in time_series_names], [name_column])
         df = (
             df
             .withColumn("action_type", F.lit("Data Feed"))
